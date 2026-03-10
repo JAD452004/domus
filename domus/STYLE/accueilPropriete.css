@@ -1,0 +1,388 @@
+/* --- RESET --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background-color: #f8fafc;
+  overflow-x: hidden;
+  background-color: #c9d6ff;
+  background: linear-gradient(to right, #e2e2e2, #c9d6ff);
+}
+
+/* --- ANIMATIONS --- */
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-150px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* --- NAVBAR --- */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5%;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.logo img {
+  height: 100px;
+  animation: slideFromLeft 1.2s ease-out forwards;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #475569;
+  margin: 0 10px;
+  font-weight: 600;
+  padding: 10px;
+  transition: 0.3s;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+  color: #2563eb;
+}
+.nav-links[data-animation="to-left"] a::before {
+  transform: translate(101%, -50%);
+}
+
+.nav-links[data-animation="to-left"] a:hover::before {
+  transform: translate(-101%, -50%);
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border: none;
+}
+
+.btn-outline {
+  background: none;
+  border: 2px solid #2563eb;
+  color: #2563eb;
+  background-color: #2563eb;
+  color: white;
+  transition: 0.3s;
+}
+
+.btn-outline:hover {
+  background: #2563eb;
+  color: white;
+  transition: 0.3s;
+}
+
+/* ________________________________________________ */
+
+/* --- HERO SECTION --- */
+.tete {
+  position: relative;
+  height: 60vh;
+  background: url("https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg")
+    no-repeat center/cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.tete-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.tete-content {
+  position: relative;
+  z-index: 2;
+  width: 80%;
+}
+
+.tete-content h2 {
+  font-size: 3rem;
+  animation: slideFromLeft 1.2s ease-out forwards;
+}
+
+.tete-content p {
+  font-size: 1.2rem;
+  animation: slideFromLeft 1.2s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+/* --- SECTION RECHERCHE (ADAPTATION) --- */
+
+/* On s'assure que le contenu de la tête est bien centré */
+.tete-content {
+  position: relative;
+  z-index: 5;
+  width: 90%;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center; /* Centre le texte et la barre */
+}
+
+/* Le conteneur du formulaire */
+.search-container {
+  background: #ffffff67;
+  padding: 15px;
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  display: flex; /* Aligne les enfants en ligne */
+  align-items: center;
+  gap: 10px;
+  margin-top: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.075); /* Effet de bordure élégant */
+}
+
+/* On force le formulaire à se comporter comme un conteneur flexible */
+.search-container form {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Style des inputs et selects */
+.search-input,
+.search-select {
+  height: 55px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0 15px;
+  font-size: 16px;
+  color: #334155;
+  background-color: #f1f5f9;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input {
+  flex: 3; /* Prend plus de place */
+}
+
+.search-select {
+  flex: 1.5;
+  cursor: pointer;
+  appearance: none; /* Retire le style par défaut du navigateur */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 15px;
+}
+
+/* Focus : quand on clique dedans */
+.search-input:focus,
+.search-select:focus {
+  border-color: #2563eb;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* Bouton de recherche */
+.search-btn {
+  height: 55px;
+  padding: 0 30px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.search-btn:hover {
+  background-color: #1e40af;
+  transform: scale(1.02);
+}
+
+/* --- MOBILE (Smartphone) --- */
+@media (max-width: 768px) {
+  .search-container form {
+    flex-direction: column; /* Empile les éléments verticalement */
+  }
+
+  .search-input,
+  .search-select,
+  .search-btn {
+    width: 100%;
+    flex: none;
+  }
+
+  .tete {
+    height: auto;
+    padding: 100px 0;
+  }
+}
+
+/* __________________________________ */
+
+/* --- SLIDER DE CARTES --- */
+.section-container {
+  padding: 60px 5%;
+}
+
+.slider-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.maison-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% / 3) - 20px);
+  gap: 30px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding: 20px 0;
+}
+
+.maison-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.maison-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: 0.6s;
+}
+
+.maison-card:hover {
+  transform: translateY(-10px);
+}
+
+.maison-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.description {
+  padding: 20px;
+}
+
+.slide-button {
+  height: 50px;
+  width: 50px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  position: absolute;
+  z-index: 10;
+}
+
+#prev-slide {
+  left: -20px;
+}
+#next-slide {
+  right: -20px;
+}
+
+/* --- FOOTER --- */
+.info {
+  background: #1e293b;
+  color: white;
+  padding: 50px 5%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 40px;
+}
+.social-icons a:hover {
+  transform: translateY(-5px);
+  transform: scale(1.5);
+  transition: transform 0.3s ease;
+}
+
+/* CORRECTION RESPONSIVE POUR TRÈS PETITS ÉCRANS (344px) */
+@media (max-width: 400px) {
+  .vendeur-header {
+    min-height: 25vh;
+    padding: 30px 15px;
+  }
+  
+  .vendeur-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .vendeur-header p {
+    font-size: 0.9rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .action-btn {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+  
+  .slider-card {
+    min-width: 260px;
+  }
+  
+  .stat-card-vendeur {
+    padding: 15px;
+  }
+  
+  .stat-icon-vendeur {
+    width: 45px;
+    height: 45px;
+    font-size: 1.2rem;
+  }
+  
+  .stat-content-vendeur h3 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 344px) {
+  .slider-card {
+    min-width: 240px;
+  }
+  
+  .slider-card-content {
+    padding: 15px;
+  }
+  
+  .slider-card-title {
+    font-size: 1rem;
+  }
+  
+  .slider-card-price {
+    font-size: 1rem;
+  }
+}
