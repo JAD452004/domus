@@ -188,8 +188,8 @@ session_start();
         /* BULLE DE PAROLE - BIEN ESPACÉE */
         .cat-speech {
             position: absolute;
-            bottom: 140px;  /* Espace généreux au-dessus du chat */
-            left: 80px;     /* Décalé sur la droite */
+            bottom: 140px;
+            left: 80px;
             background: white;
             padding: 12px 22px;
             border-radius: 30px 30px 30px 8px;
@@ -981,7 +981,7 @@ session_start();
             font-size: 14px;
         }
 
-        /* MODE MOBILE - BULLE AJUSTÉE */
+        /* MODE MOBILE - CHAT EN HAUT */
         @media (max-width: 900px) {
             .main-container { 
                 height: 95vh; 
@@ -989,26 +989,6 @@ session_start();
                 margin: 10px;
             }
             .right-panel { padding: 30px; }
-            .cat-container { 
-                width: 90px; 
-                height: 90px; 
-                bottom: 10px; 
-                left: 10px;
-            }
-            .cat-speech, .cat-thought { 
-                bottom: 110px;
-                left: 60px;
-                font-size: 11px; 
-                padding: 10px 18px; 
-                max-width: 220px;
-            }
-            .btn-social {
-                width: 45px;
-                height: 45px;
-            }
-            .btn-social i {
-                font-size: 20px;
-            }
         }
 
         @media (max-width: 768px) {
@@ -1031,10 +1011,61 @@ session_start();
                 width: 100%; 
                 padding: 30px 20px; 
                 min-height: 180px; 
+                position: relative;
             }
             
             .left-panel img { 
                 width: 90px; 
+            }
+            
+            /* CHAT EN HAUT À DROITE DU LOGO */
+            .cat-container { 
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                bottom: auto;
+                left: auto;
+                width: 70px;
+                height: 70px;
+                z-index: 10000;
+            }
+            
+            /* BULLE AJUSTÉE POUR LE CHAT EN HAUT */
+            .cat-speech, .cat-thought { 
+                bottom: auto;
+                top: 80px;
+                left: auto;
+                right: 0;
+                font-size: 10px; 
+                padding: 6px 12px; 
+                max-width: 180px;
+                white-space: nowrap;
+            }
+            
+            .cat-speech::before, .cat-thought::before {
+                top: -12px;
+                bottom: auto;
+                left: auto;
+                right: 20px;
+                border-left: 12px solid transparent;
+                border-right: 5px solid transparent;
+                border-bottom: 12px solid white;
+                border-top: none;
+            }
+            
+            .cat-speech::after {
+                top: -15px;
+                bottom: auto;
+                left: auto;
+                right: 20px;
+                border-left: 12px solid transparent;
+                border-right: 5px solid transparent;
+                border-bottom: 12px solid var(--primary);
+                border-top: none;
+            }
+            
+            .cat-thought::before {
+                border-bottom-color: #f1f5f9;
             }
             
             .right-panel {
@@ -1043,24 +1074,6 @@ session_start();
                 border-radius: 25px 25px 0 0; 
                 margin-top: -15px;
             }
-            
-            .cat-container { 
-                width: 80px; 
-                height: 80px; 
-                bottom: 10px; 
-                left: 10px;
-                z-index: 10000;
-            }
-            
-            .cat-speech, .cat-thought { 
-                bottom: 100px;
-                left: 50px;
-                font-size: 10px; 
-                padding: 8px 16px; 
-                max-width: 200px;
-            }
-            
-            .right-panel { padding-bottom: 100px; }
             
             .btn-social {
                 width: 42px;
@@ -1073,18 +1086,17 @@ session_start();
 
         @media (max-width: 480px) {
             .cat-container { 
-                width: 70px; 
-                height: 70px; 
-                bottom: 5px; 
-                left: 5px;
+                width: 60px; 
+                height: 60px; 
+                top: 15px;
+                right: 15px;
             }
             
             .cat-speech, .cat-thought { 
-                bottom: 90px;
-                left: 40px;
+                top: 70px;
                 font-size: 9px; 
-                padding: 6px 14px; 
-                max-width: 180px;
+                padding: 5px 10px; 
+                max-width: 160px;
             }
             
             .btn-social {
@@ -1118,7 +1130,7 @@ session_start();
         </script>
     <?php endif; ?>
 
-    <!-- PERSONNAGE CHAT BLEU AVEC BULLE BIEN ESPACÉE -->
+    <!-- PERSONNAGE CHAT BLEU -->
     <div class="cat-container" id="catContainer">
         <div class="cat-speech" id="catSpeech">
             <i class="fas fa-paw"></i>
