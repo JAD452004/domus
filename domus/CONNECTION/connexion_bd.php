@@ -1,9 +1,9 @@
 <?php
 // connexion_bd.php - Version avec VOS identifiants InfinityFree
-$servername = "sql305.infinityfree.com";
-$username = "if0_41023284";
-$password = "FDwYveEwOpEaSsq";
-$dbname = "if0_41023284_domus_db";
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "domus_db";
 
 $db = new mysqli($servername, $username, $password, $dbname);
 
