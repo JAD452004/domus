@@ -190,7 +190,7 @@ session_start();
         /* BULLE DE PAROLE */
         .cat-speech {
             position: absolute;
-            bottom: 140px;
+            bottom: 125px;
             left: 80px;
             background: white;
             padding: 12px 22px;
@@ -204,7 +204,7 @@ session_start();
             transition: opacity 0.3s ease, transform 0.2s ease;
             pointer-events: none;
             z-index: 30;
-            max-width: 250px;
+           
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -1554,7 +1554,7 @@ session_start();
                     <!-- CHAMP MODIFIÉ : EMAIL OU TÉLÉPHONE -->
                     <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
-                        <input type="text" name="identifiant" id="login_identifiant" placeholder="Email ou Téléphone" required onfocus="handleFieldFocus(event)" oninput="handleFieldInput(event)">
+                        <input type="text" name="identifiant" id="login_identifiant" placeholder="Entrez votre Téléphone" required onfocus="handleFieldFocus(event)" oninput="handleFieldInput(event)">
                     </div>
 
                     <div class="input-group">
