@@ -46,7 +46,6 @@ $mes_biens = $stmt_list->get_result();
     <style>
         /* STYLES SPÉCIFIQUES AU TABLEAU DE BORD VENDEUR */
         
-        /* En-tête du dashboard */
         .vendeur-dashboard-header {
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(37, 99, 235, 0.7)),
                         url("https://images.pexels.com/photos/7031427/pexels-photo-7031427.jpeg") center/cover;
@@ -61,14 +60,12 @@ $mes_biens = $stmt_list->get_result();
             position: relative;
         }
         
-        /* Conteneur principal */
         .vendeur-container {
             max-width: 1200px;
             margin: 0 auto 60px;
             padding: 0 20px;
         }
         
-        /* Grille des statistiques */
         .stats-grid-vendeur {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -153,7 +150,6 @@ $mes_biens = $stmt_list->get_result();
             margin-top: 5px;
         }
         
-        /* Liste des propriétés */
         .properties-list-vendeur {
             display: flex;
             flex-direction: column;
@@ -198,6 +194,10 @@ $mes_biens = $stmt_list->get_result();
             color: #0f172a;
             margin: 0 0 8px 0;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         
         .property-details-vendeur {
@@ -213,6 +213,9 @@ $mes_biens = $stmt_list->get_result();
             color: #10b981;
             font-weight: 700;
             font-size: 1.2rem;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
         }
         
         .property-actions-vendeur {
@@ -267,7 +270,6 @@ $mes_biens = $stmt_list->get_result();
             transform: scale(1.1);
         }
         
-        /* Badge pour les vues */
         .vues-badge-property {
             display: inline-flex;
             align-items: center;
@@ -283,7 +285,6 @@ $mes_biens = $stmt_list->get_result();
             color: #f59e0b;
         }
         
-        /* Badge pour les notifications */
         .notification-badge {
             background: #ef4444;
             color: white;
@@ -302,7 +303,6 @@ $mes_biens = $stmt_list->get_result();
             100% { transform: scale(1); }
         }
         
-        /* Bouton ajouter */
         .add-property-btn {
             display: inline-flex;
             align-items: center;
@@ -323,7 +323,6 @@ $mes_biens = $stmt_list->get_result();
             background: linear-gradient(135deg, #059669, #047857);
         }
         
-        /* Aucune propriété */
         .empty-properties-vendeur {
             text-align: center;
             padding: 60px 40px;
@@ -339,7 +338,16 @@ $mes_biens = $stmt_list->get_result();
             color: #cbd5e1;
         }
         
-        /* Responsive */
+        .transaction-badge-mini {
+            margin-left: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: white;
+            display: inline-block;
+        }
+        
         @media (max-width: 991px) {
             .stats-grid-vendeur {
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -383,6 +391,10 @@ $mes_biens = $stmt_list->get_result();
             .property-details-vendeur {
                 justify-content: center;
             }
+            
+            .property-content-vendeur h4 {
+                justify-content: center;
+            }
         }
         
         @media (max-width: 480px) {
@@ -399,30 +411,25 @@ $mes_biens = $stmt_list->get_result();
 </head>
 <body>
     <!-- ============================
-         BARRE DE NAVIGATION (MÊME STYLE)
+         BARRE DE NAVIGATION
          ============================ -->
     <nav class="navbar">
-        <!-- Logo -->
         <div class="logo">
-            <!-- CHEMIN DU LOGO CORRECT -->
             <img src="../DOMUS IMAGE/ChatGPT_Image_10_déc._2025__21_34_36-removebg-preview.png" alt="DOMUS">
             <div class="logo-text">DOM<span>US</span></div>
         </div>
         
-        <!-- Menu de navigation -->
         <ul class="nav-links" id="navLinks">
             <li><a href="accueilPropriete.php"><i class="fa-solid fa-house"></i> <span>Accueil</span></a></li>
             <li><a href="propriete.php" class="active"><i class="fa-solid fa-chart-line"></i> <span>Tableau de Bord</span></a></li>
             <li><a href="contact.php"><i class="fa-solid fa-envelope"></i> <span>Contact</span></a></li>
         </ul>
 
-        <!-- Zone utilisateur -->
         <div class="user-area">
             <div class="user-info">
                 <?php include __DIR__ . '/_user_avatar.php'; ?>
             </div>
             
-            <!-- Notification badge pour les RDV -->
             <a href="../PHP/liste_rdv.php" style="position: relative; margin-right: 15px; color: #64748b;">
                 <i class="fa-solid fa-bell" style="font-size: 1.3rem;"></i>
                 <?php if ($stats['rdv_en_attente'] > 0): ?>
@@ -527,7 +534,9 @@ $mes_biens = $stmt_list->get_result();
 
             <?php if ($mes_biens->num_rows > 0): ?>
                 <div class="properties-list-vendeur">
-                    <?php while ($bien = $mes_biens->fetch_assoc()): ?>
+                    <?php while ($bien = $mes_biens->fetch_assoc()): 
+                        $prop_transaction = $bien['transaction_type'] ?? 'vente';
+                    ?>
                         <div class="property-item-vendeur">
                             <!-- Image -->
                             <div class="property-image-vendeur">
@@ -536,7 +545,12 @@ $mes_biens = $stmt_list->get_result();
                             
                             <!-- Contenu -->
                             <div class="property-content-vendeur">
-                                <h4><?php echo htmlspecialchars($bien['titre']); ?></h4>
+                                <h4>
+                                    <?php echo htmlspecialchars($bien['titre']); ?>
+                                    <span class="transaction-badge-mini" style="background: <?php echo $prop_transaction === 'vente' ? '#10b981' : '#f59e0b'; ?>;">
+                                        <?php echo $prop_transaction === 'vente' ? 'Vente' : 'Location'; ?>
+                                    </span>
+                                </h4>
                                 <div class="property-details-vendeur">
                                     <span><i class="fa-solid fa-bed"></i> <?php echo $bien['chambres']; ?> Ch.</span>
                                     <span><i class="fa-solid fa-shower"></i> <?php echo $bien['salles_bain']; ?> Sdb.</span>
@@ -547,6 +561,9 @@ $mes_biens = $stmt_list->get_result();
                                 </div>
                                 <div class="property-price-vendeur">
                                     <?php echo number_format($bien['prix'], 0, ',', ' '); ?> XOF
+                                    <?php if ($prop_transaction === 'location'): ?>
+                                        <span style="font-size: 0.8rem; color: #64748b;">/mois</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             
@@ -587,7 +604,7 @@ $mes_biens = $stmt_list->get_result();
     </div>
 
     <!-- ============================
-         FOOTER (MÊME QUE LES AUTRES PAGES)
+         FOOTER
          ============================ -->
     <footer class="info">
         <div class="footer-section">
@@ -619,7 +636,6 @@ $mes_biens = $stmt_list->get_result();
          JAVASCRIPT
          ============================ -->
     <script>
-    // Menu mobile (même code que accueilClient.php)
     document.addEventListener("DOMContentLoaded", function() {
         const mobileToggle = document.getElementById("mobileMenuBtn");
         const navLinks = document.getElementById("navLinks");
@@ -641,7 +657,6 @@ $mes_biens = $stmt_list->get_result();
                 }
             });
             
-            // Ferme le menu quand on clique en dehors
             document.addEventListener("click", function (event) {
                 if (!mobileToggle.contains(event.target) && !navLinks.contains(event.target)) {
                     navLinks.classList.remove("active");
@@ -654,7 +669,6 @@ $mes_biens = $stmt_list->get_result();
                 }
             });
             
-            // Ferme le menu quand on clique sur un lien
             const navItems = navLinks.querySelectorAll("a");
             navItems.forEach((item) => {
                 item.addEventListener("click", function () {
@@ -670,14 +684,12 @@ $mes_biens = $stmt_list->get_result();
         }
     });
     
-    // Fonction pour confirmer la suppression
     function confirmerSuppression(id) {
         if (confirm("Voulez-vous vraiment supprimer cette propriété ? Cette action est irréversible.")) {
             window.location.href = "../PHP/supprimer_propriete.php?id=" + id;
         }
     }
     
-    // Mise à jour automatique des notifications
     function updateNotifications() {
         fetch('../PHP/get_rdv_count.php')
             .then(response => response.text())
@@ -690,7 +702,6 @@ $mes_biens = $stmt_list->get_result();
             .catch(error => console.error('Erreur de mise à jour:', error));
     }
     
-    // Mettre à jour toutes les 10 secondes
     setInterval(updateNotifications, 10000);
     </script>
 </body>

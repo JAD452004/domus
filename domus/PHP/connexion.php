@@ -3,7 +3,8 @@ session_start();
 require_once "data.php";
 
 if (isset($_POST['connecter'])) {
-    $tel = trim($_POST['numero']);
+    // CORRECTION : 'identifiant' au lieu de 'numero'
+    $identifiant = trim($_POST['identifiant']);
     $pass = trim($_POST['code']);
     
     $user = null;
@@ -13,7 +14,7 @@ if (isset($_POST['connecter'])) {
     $sqlAdmin = "SELECT id_admin AS id, nom AS nom_complet, mot_de_passe FROM admin WHERE telephone = ?";
     $stmt = $db->prepare($sqlAdmin);
     if ($stmt) {
-        $stmt->bind_param("s", $tel);
+        $stmt->bind_param("s", $identifiant);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($row = $res->fetch_assoc()) {
@@ -23,12 +24,12 @@ if (isset($_POST['connecter'])) {
         $stmt->close();
     }
 
-    // RECHERCHE PROPRIETAIRE (en minuscules)
+    // RECHERCHE PROPRIETAIRE
     if (!$user) {
         $sqlPro = "SELECT id_pro AS id, nom_complet, mot_de_passe FROM proprietaire WHERE telephone = ?";
         $stmt = $db->prepare($sqlPro);
         if ($stmt) {
-            $stmt->bind_param("s", $tel);
+            $stmt->bind_param("s", $identifiant);
             $stmt->execute();
             $res = $stmt->get_result();
             if ($row = $res->fetch_assoc()) {
@@ -39,12 +40,12 @@ if (isset($_POST['connecter'])) {
         }
     }
 
-    // RECHERCHE CLIENT (en minuscules)
+    // RECHERCHE CLIENT
     if (!$user) {
         $sqlCli = "SELECT id_cli AS id, nom_complet, mot_de_passe FROM client WHERE telephone = ?";
         $stmt = $db->prepare($sqlCli);
         if ($stmt) {
-            $stmt->bind_param("s", $tel);
+            $stmt->bind_param("s", $identifiant);
             $stmt->execute();
             $res = $stmt->get_result();
             if ($row = $res->fetch_assoc()) {

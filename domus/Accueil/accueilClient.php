@@ -30,6 +30,9 @@ $search = isset($_GET['search']) ? $db->real_escape_string($_GET['search']) : ''
 $type = isset($_GET['type']) ? $db->real_escape_string($_GET['type']) : '';
 $ville = isset($_GET['ville']) ? $db->real_escape_string($_GET['ville']) : '';
 
+// NOUVEAU : GESTION DU FILTRE VENTE/LOCATION
+$transaction_type = isset($_GET['transaction_type']) ? $db->real_escape_string($_GET['transaction_type']) : '';
+
 // ============================
 // TYPES À AFFICHER DANS L'ORDRE
 $types_a_afficher = ['Maison', 'Villa', 'Appartement', 'Terrain'];
@@ -145,42 +148,204 @@ $nom_complet = $nom_client;
             border-radius: 10px;
         }
 
-        /* Styles pour les notifications */
-        .toast-message {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
+        /* NOUVEAU : Styles pour les filtres Vente/Location */
+        .transaction-filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0 30px;
+            flex-wrap: wrap;
+        }
+        
+        .transaction-btn {
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            background: white;
+            color: #64748b;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .transaction-btn i {
+            font-size: 1.1rem;
+        }
+        
+        .transaction-btn.vente {
+            border-color: #10b981;
+            color: #10b981;
+        }
+        
+        .transaction-btn.vente:hover {
             background: #10b981;
             color: white;
-            border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 9999;
-            animation: slideIn 0.3s ease;
         }
-
-        .toast-message.error {
-            background: #ef4444;
+        
+        .transaction-btn.vente.active {
+            background: #10b981;
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-
-        .toast-message.info {
-            background: #3b82f6;
+        
+        .transaction-btn.location {
+            border-color: #f59e0b;
+            color: #f59e0b;
         }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        
+        .transaction-btn.location:hover {
+            background: #f59e0b;
+            color: white;
         }
-
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+        
+        .transaction-btn.location.active {
+            background: #f59e0b;
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
         }
-
-        /* Style amélioré pour le bouton favori */
+        
+        .transaction-btn.all {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+        
+        .transaction-btn.all:hover {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .transaction-btn.all.active {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        /* NOUVEAU : Badge Vente/Location sur les cartes */
+        .transaction-badge {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .transaction-badge.vente {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .transaction-badge.location {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .card-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        /* Styles existants conservés */
+        .maison-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .maison-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .maison-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .maison-card:hover .maison-image {
+            transform: scale(1.1);
+        }
+        
+        .type-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(37, 99, 235, 0.9);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+        }
+        
+        .description {
+            padding: 20px;
+        }
+        
+        .description h3 {
+            font-size: 1.1rem;
+            color: #0f172a;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        
+        .property-details {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            color: #64748b;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+        }
+        
+        .property-details p {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 0;
+        }
+        
+        .property-details i {
+            color: #2563eb;
+        }
+        
+        .prix {
+            color: #10b981;
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+        
+        .prix small {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 400;
+        }
+        
         .favori-btn {
             position: absolute;
             top: 15px;
@@ -198,27 +363,17 @@ $nom_complet = $nom_client;
             z-index: 10;
             transition: all 0.3s ease;
         }
-
+        
         .favori-btn i {
             font-size: 1.2rem;
             color: #cbd5e1;
             transition: all 0.3s ease;
         }
-
-        .favori-btn:hover {
-            transform: scale(1.1);
-            background: #fee2e2;
-        }
-
+        
         .favori-btn.active i {
             color: #dc3545 !important;
         }
-
-        .favori-btn:hover i {
-            color: #dc3545;
-        }
-
-        /* Badge pour le nombre de vues uniques */
+        
         .vues-badge {
             position: absolute;
             bottom: 10px;
@@ -233,29 +388,11 @@ $nom_complet = $nom_client;
             gap: 5px;
             z-index: 5;
         }
-
+        
         .vues-badge i {
-            font-size: 0.8rem;
             color: #fbbf24;
         }
-
-        /* Tooltip pour les vues */
-        .vues-badge:hover::after {
-            content: "Visiteurs uniques";
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            white-space: nowrap;
-            margin-bottom: 5px;
-        }
-
-        /* Styles pour l'avatar (définis dans _user_avatar.php) */
+        
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -277,6 +414,21 @@ $nom_complet = $nom_client;
         .user-name {
             font-weight: 500;
             margin-left: 8px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            color: #64748b;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #cbd5e1;
         }
     </style>
 </head>
@@ -313,6 +465,23 @@ $nom_complet = $nom_client;
         <div class="tete-content">
             <h2>Bienvenue, <?php echo htmlspecialchars($nom_client); ?></h2>
             <p>Explorez nos exclusivités immobilières.</p>
+            
+            <!-- NOUVEAU : Filtres Vente/Location -->
+            <div class="transaction-filters">
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['transaction_type' => ''])); ?>" 
+                   class="transaction-btn all <?php echo empty($transaction_type) ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-list"></i> Tous
+                </a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['transaction_type' => 'vente'])); ?>" 
+                   class="transaction-btn vente <?php echo $transaction_type === 'vente' ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-tag"></i> Vente
+                </a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['transaction_type' => 'location'])); ?>" 
+                   class="transaction-btn location <?php echo $transaction_type === 'location' ? 'active' : ''; ?>">
+                    <i class="fa-solid fa-calendar-alt"></i> Location
+                </a>
+            </div>
+            
             <div class="search-container">
                 <form method="GET" action="">
                     <div class="input-group">
@@ -342,6 +511,10 @@ $nom_complet = $nom_client;
                             <option value="Autre" <?php echo ($ville == 'Autre') ? 'selected' : ''; ?>>Autres villes</option>
                         </select>
                     </div>
+                    <!-- NOUVEAU : Conserver le filtre transaction_type -->
+                    <?php if (!empty($transaction_type)): ?>
+                        <input type="hidden" name="transaction_type" value="<?php echo htmlspecialchars($transaction_type); ?>">
+                    <?php endif; ?>
                     <button type="submit" class="search-btn">
                         <i class="fa-solid fa-magnifying-glass"></i> Chercher
                     </button>
@@ -361,6 +534,10 @@ $nom_complet = $nom_client;
         if ($search != '') $sql .= " AND (titre LIKE '%$search%' OR description LIKE '%$search%')";
         if ($type != '' && $type != $type_bien) continue; 
         if ($ville != '') $sql .= " AND ville = '$ville'";
+        // NOUVEAU : Filtrer par type de transaction
+        if (!empty($transaction_type)) {
+            $sql .= " AND transaction_type = '$transaction_type'";
+        }
         $sql .= " ORDER BY id_maison DESC";
         
         $result = $db->query($sql);
@@ -370,7 +547,14 @@ $nom_complet = $nom_client;
     ?>
     <section class="section-container">
         <div class="section-header" style="margin-bottom: 20px;">
-            <h2><?php echo $type_bien; ?>s disponibles</h2>
+            <h2>
+                <?php echo $type_bien; ?>s disponibles
+                <?php if (!empty($transaction_type)): ?>
+                    <span style="font-size: 0.8rem; margin-left: 10px; padding: 3px 10px; background: <?php echo $transaction_type === 'vente' ? '#10b981' : '#f59e0b'; ?>; color: white; border-radius: 20px;">
+                        <?php echo $transaction_type === 'vente' ? 'Vente' : 'Location'; ?>
+                    </span>
+                <?php endif; ?>
+            </h2>
             <div class="type-count">
                 <span><?php echo $result->num_rows; ?> propriété<?php echo $result->num_rows > 1 ? 's' : ''; ?></span>
             </div>
@@ -384,11 +568,22 @@ $nom_complet = $nom_client;
                 <?php while ($prop = $result->fetch_assoc()): 
                     $est_favori = in_array($prop['id_maison'], $favoris_existants);
                     $image = !empty($prop['image']) ? $prop['image'] : 'https://via.placeholder.com/300x200?text=DOMUS';
+                    // NOUVEAU : Déterminer le type de transaction
+                    $prop_transaction = $prop['transaction_type'] ?? 'vente';
                 ?>
                     <div class="maison-card" onclick="window.location.href='../PHP/incrementer_vue_unique.php?id=<?php echo $prop['id_maison']; ?>'">
                         <div class="card-img-wrapper">
                             <img src="<?php echo htmlspecialchars($image); ?>" class="maison-image" alt="<?php echo htmlspecialchars($prop['titre']); ?>">
                             <div class="type-badge"><?php echo $prop['type_bien']; ?></div>
+                            
+                            <!-- NOUVEAU : Badge Vente/Location -->
+                            <div class="transaction-badge <?php echo $prop_transaction; ?>">
+                                <?php if ($prop_transaction === 'vente'): ?>
+                                    <i class="fa-solid fa-tag"></i> Vente
+                                <?php else: ?>
+                                    <i class="fa-solid fa-calendar-alt"></i> Location
+                                <?php endif; ?>
+                            </div>
                             
                             <div class="vues-badge" title="Visiteurs uniques">
                                 <i class="fa-solid fa-eye"></i>
@@ -404,7 +599,7 @@ $nom_complet = $nom_client;
                         <div class="description">
                             <h3><?php echo htmlspecialchars($prop['titre']); ?></h3>
                             <div class="property-details">
-                                <?php if ($type_bien != 'Terrain'): ?>
+                                <?php if ($prop['type_bien'] != 'Terrain'): ?>
                                 <p><i class="fa-solid fa-bed"></i> <?php echo $prop['chambres'] ?? 0; ?> Ch.</p>
                                 <p><i class="fa-solid fa-shower"></i> <?php echo $prop['salles_bain'] ?? 0; ?> Sdb.</p>
                                 <?php else: ?>
@@ -414,6 +609,9 @@ $nom_complet = $nom_client;
                             </div>
                             <div class="prix">
                                 <?php echo number_format($prop['prix'] ?? 0, 0, ',', ' '); ?> XOF
+                                <?php if ($prop_transaction === 'location'): ?>
+                                    <small>/mois</small>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -433,10 +631,10 @@ $nom_complet = $nom_client;
     ?>
     <section class="section-container">
         <div class="no-results">
-            <i class="fa-regular fa-folder-open" style="font-size: 60px; color: #cbd5e1; margin-bottom: 20px;"></i>
-            <h3 style="color: #1e293b; margin-bottom: 10px;">Aucune annonce trouvée</h3>
-            <p style="color: #64748b; margin-bottom: 20px;">Aucune propriété ne correspond à votre recherche.</p>
-            <?php if ($type != '' || $ville != '' || $search != ''): ?>
+            <i class="fa-regular fa-folder-open"></i>
+            <h3>Aucune annonce trouvée</h3>
+            <p>Aucune propriété ne correspond à votre recherche.</p>
+            <?php if ($type != '' || $ville != '' || $search != '' || !empty($transaction_type)): ?>
             <a href="accueilClient.php" style="background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
                 <i class="fa-solid fa-times"></i> Effacer tous les filtres
             </a>
@@ -469,7 +667,6 @@ $nom_complet = $nom_client;
         </div>
     </footer>
 
-    <!-- JavaScript -->
     <script>
         function toggleFavori(idMaison, btn) {
             event.stopPropagation();
@@ -491,34 +688,15 @@ $nom_complet = $nom_client;
                 if (data.status === 'added') {
                     icon.style.color = '#dc3545';
                     btn.classList.add('active');
-                    showMessage('Ajouté aux favoris', 'success');
                 } 
                 else if (data.status === 'removed') {
                     icon.style.color = '#cbd5e1';
                     btn.classList.remove('active');
-                    showMessage('Retiré des favoris', 'info');
-                }
-                else {
-                    showMessage('Erreur: ' + data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Erreur:', error);
-                showMessage('Erreur de connexion', 'error');
             });
-        }
-
-        function showMessage(text, type) {
-            const toast = document.createElement('div');
-            toast.className = 'toast-message ' + (type === 'error' ? 'error' : type === 'info' ? 'info' : '');
-            toast.textContent = text;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
         }
 
         document.addEventListener("DOMContentLoaded", function() {

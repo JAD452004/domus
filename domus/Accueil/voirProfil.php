@@ -1060,6 +1060,83 @@ body {
     border-top: 1px solid var(--gray-200);
 }
 
+/* ===== NOUVEAU : STYLES POUR LA CAMÉRA ===== */
+.camera-container {
+    width: 100%;
+    background: #000;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 1rem;
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#cameraFeed {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.camera-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: var(--secondary);
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    box-shadow: var(--shadow-lg);
+}
+
+.camera-btn:hover {
+    transform: scale(1.1);
+}
+
+.camera-btn.capture {
+    background: var(--danger);
+}
+
+.camera-btn.switch {
+    background: var(--primary);
+}
+
+.camera-select {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.camera-message {
+    color: var(--text-muted);
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+.camera-message i {
+    color: var(--warning);
+}
+
 /* ===== EMPTY STATES ===== */
 .empty-state {
     text-align: center;
@@ -1258,6 +1335,10 @@ body {
         gap: 1.5rem;
         margin-top: 3rem;
     }
+    
+    .camera-container {
+        min-height: 250px;
+    }
 }
 
 /* Petits mobiles (480px et moins) */
@@ -1400,6 +1481,12 @@ body {
     .footer-section p,
     .footer-section li {
         font-size: 0.85rem;
+    }
+    
+    .camera-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
     }
 }
 
@@ -1762,11 +1849,63 @@ body {
                 <button class="modal-close" id="selectModalClose"><i class="fa-solid fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <div class="upload-area" id="selectUploadArea">
+                <!-- Options de sélection -->
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
+                    <button class="btn btn-primary" id="galleryOption" style="flex: 1; min-width: 140px;">
+                        <i class="fa-solid fa-image"></i> Galerie
+                    </button>
+                    <button class="btn btn-primary" id="cameraOption" style="flex: 1; min-width: 140px;">
+                        <i class="fa-solid fa-camera"></i> Caméra
+                    </button>
+                </div>
+                
+                <div class="upload-area" id="selectUploadArea" style="display: none;">
                     <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                     <div>Cliquez pour sélectionner une image</div>
                     <small style="color: var(--text-muted);">JPG, PNG, GIF, WEBP (Max 5MB)</small>
                     <input type="file" id="selectFileInput" class="file-input" accept="image/*" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL CAMÉRA ===== -->
+    <div class="modal" id="cameraModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-camera"></i> Prendre une photo</h3>
+                <button class="modal-close" id="cameraModalClose"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <!-- Sélection de la caméra (pour les appareils avec plusieurs caméras) -->
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <select id="cameraSelect" class="camera-select" style="display: none;">
+                        <option value="">Changer de caméra</option>
+                    </select>
+                </div>
+                
+                <!-- Conteneur de la caméra -->
+                <div class="camera-container">
+                    <video id="cameraFeed" autoplay playsinline></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                </div>
+                
+                <!-- Message d'erreur/attente -->
+                <div id="cameraMessage" class="camera-message">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Initialisation de la caméra...
+                </div>
+                
+                <!-- Contrôles -->
+                <div class="camera-controls">
+                    <button class="camera-btn switch" id="switchCameraBtn" title="Changer de caméra">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                    <button class="camera-btn capture" id="captureBtn" title="Prendre la photo">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                    <button class="camera-btn" id="cancelCameraBtn" title="Annuler">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2075,36 +2214,59 @@ body {
                 }
             });
 
-            // Gestion des modals et du recadrage
+            // ===== GESTION DES MODALS =====
             const selectModal = document.getElementById('selectModal');
+            const cameraModal = document.getElementById('cameraModal');
             const cropModal = document.getElementById('cropModal');
+            
             const changeBtn = document.getElementById('changePhotoBtn');
             const deleteBtn = document.getElementById('deletePhotoBtn');
+            
             const selectModalClose = document.getElementById('selectModalClose');
+            const cameraModalClose = document.getElementById('cameraModalClose');
             const cropModalClose = document.getElementById('cropModalClose');
+            const cancelCameraBtn = document.getElementById('cancelCameraBtn');
             const cancelCropBtn = document.getElementById('cancelCropBtn');
+            
+            const galleryOption = document.getElementById('galleryOption');
+            const cameraOption = document.getElementById('cameraOption');
             const selectUploadArea = document.getElementById('selectUploadArea');
             const selectFileInput = document.getElementById('selectFileInput');
+            
             const cropImage = document.getElementById('cropImage');
             const preview = document.getElementById('preview');
             const cropBtn = document.getElementById('cropBtn');
             const croppedImageInput = document.getElementById('croppedImageInput');
             const cropForm = document.getElementById('cropForm');
 
+            // Éléments pour la caméra
+            const cameraFeed = document.getElementById('cameraFeed');
+            const cameraCanvas = document.getElementById('cameraCanvas');
+            const cameraSelect = document.getElementById('cameraSelect');
+            const cameraMessage = document.getElementById('cameraMessage');
+            const switchCameraBtn = document.getElementById('switchCameraBtn');
+            const captureBtn = document.getElementById('captureBtn');
+
             let cropper = null;
             let currentFile = null;
+            let stream = null;
+            let currentCamera = 'user'; // 'user' pour caméra avant, 'environment' pour caméra arrière
+            let cameras = [];
 
-            // Ouvrir le modal de sélection
-            if(changeBtn) {
-                changeBtn.addEventListener('click', () => {
-                    selectModal.classList.add('active');
-                });
-            }
-
-            // Fermer les modals
+            // ===== FONCTIONS POUR LES MODALS =====
             function closeSelectModal() {
                 selectModal.classList.remove('active');
+                selectUploadArea.style.display = 'none';
                 selectFileInput.value = '';
+            }
+
+            function closeCameraModal() {
+                cameraModal.classList.remove('active');
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                cameraMessage.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Initialisation de la caméra...';
             }
 
             function closeCropModal() {
@@ -2117,52 +2279,92 @@ body {
                 preview.src = '';
             }
 
-            if(selectModalClose) selectModalClose.addEventListener('click', closeSelectModal);
-            if(cropModalClose) cropModalClose.addEventListener('click', closeCropModal);
-            if(cancelCropBtn) cancelCropBtn.addEventListener('click', () => {
-                closeCropModal();
-                selectModal.classList.add('active');
-            });
+            // ===== INITIALISATION DE LA CAMÉRA =====
+            async function initCamera(useCamera = 'user') {
+                try {
+                    cameraMessage.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Accès à la caméra...';
+                    
+                    const constraints = {
+                        video: {
+                            facingMode: useCamera,
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    };
+                    
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    cameraFeed.srcObject = stream;
+                    
+                    // Obtenir la liste des caméras disponibles
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    cameras = devices.filter(device => device.kind === 'videoinput');
+                    
+                    // Mettre à jour le sélecteur de caméra
+                    cameraSelect.innerHTML = '';
+                    if (cameras.length > 1) {
+                        cameraSelect.style.display = 'block';
+                        cameras.forEach((camera, index) => {
+                            const option = document.createElement('option');
+                            option.value = index;
+                            option.text = camera.label || `Caméra ${index + 1}`;
+                            cameraSelect.appendChild(option);
+                        });
+                    } else {
+                        cameraSelect.style.display = 'none';
+                    }
+                    
+                    cameraMessage.innerHTML = '<i class="fa-solid fa-check-circle" style="color: var(--success);"></i> Caméra prête !';
+                    
+                } catch (err) {
+                    console.error('Erreur caméra:', err);
+                    cameraMessage.innerHTML = '<i class="fa-solid fa-exclamation-circle" style="color: var(--danger);"></i> Impossible d\'accéder à la caméra. Vérifiez les permissions.';
+                }
+            }
 
-            // Fermer en cliquant à l'extérieur
-            selectModal.addEventListener('click', (e) => {
-                if(e.target === selectModal) closeSelectModal();
-            });
-            cropModal.addEventListener('click', (e) => {
-                if(e.target === cropModal) closeCropModal();
-            });
-
-            // Upload area click
-            if(selectUploadArea) {
-                selectUploadArea.addEventListener('click', () => selectFileInput.click());
+            // ===== CHANGER DE CAMÉRA =====
+            async function switchCamera() {
+                if (cameras.length <= 1) return;
                 
-                // Drag & drop
-                selectUploadArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    selectUploadArea.style.background = '#f1f5f9';
-                });
-                selectUploadArea.addEventListener('dragleave', () => {
-                    selectUploadArea.style.background = 'transparent';
-                });
-                selectUploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    selectUploadArea.style.background = 'transparent';
-                    if(e.dataTransfer.files.length) {
-                        handleFileSelect(e.dataTransfer.files[0]);
-                    }
-                });
+                // Alterner entre 'user' et 'environment'
+                currentCamera = currentCamera === 'user' ? 'environment' : 'user';
+                
+                // Arrêter le flux actuel
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Réinitialiser avec la nouvelle caméra
+                await initCamera(currentCamera);
             }
 
-            // File input change
-            if(selectFileInput) {
-                selectFileInput.addEventListener('change', () => {
-                    if(selectFileInput.files.length) {
-                        handleFileSelect(selectFileInput.files[0]);
-                    }
-                });
+            // ===== CAPTURER LA PHOTO =====
+            function capturePhoto() {
+                if (!stream) return;
+                
+                const context = cameraCanvas.getContext('2d');
+                cameraCanvas.width = cameraFeed.videoWidth;
+                cameraCanvas.height = cameraFeed.videoHeight;
+                context.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+                
+                // Convertir en blob
+                cameraCanvas.toBlob(function(blob) {
+                    const file = new File([blob], 'camera_photo.jpg', { type: 'image/jpeg' });
+                    
+                    // Simuler un fichier pour le recadrage
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    selectFileInput.files = dataTransfer.files;
+                    
+                    // Traiter comme un fichier sélectionné
+                    handleFileSelect(file);
+                    
+                    // Fermer la caméra
+                    closeCameraModal();
+                }, 'image/jpeg', 0.9);
             }
 
-            // Gestion de la sélection de fichier
+            // ===== GESTION DE LA SÉLECTION DE FICHIER =====
             function handleFileSelect(file) {
                 if(!file.type.startsWith('image/')) {
                     alert('Veuillez sélectionner une image valide.');
@@ -2199,7 +2401,6 @@ body {
                             cropBoxResizable: true,
                             toggleDragModeOnDblclick: false,
                             ready() {
-                                // Ajuster la zone de recadrage pour être carrée et bien centrée
                                 const cropBox = cropper.getCropBoxData();
                                 const size = Math.min(cropBox.width, cropBox.height);
                                 cropper.setCropBoxData({
@@ -2210,7 +2411,6 @@ body {
                                 });
                             },
                             crop(event) {
-                                // Mettre à jour l'aperçu en temps réel
                                 const canvas = cropper.getCroppedCanvas({
                                     width: 300,
                                     height: 300
@@ -2224,6 +2424,114 @@ body {
                 reader.readAsDataURL(file);
             }
 
+            // ===== ÉVÉNEMENTS =====
+            if(changeBtn) {
+                changeBtn.addEventListener('click', () => {
+                    selectModal.classList.add('active');
+                    selectUploadArea.style.display = 'block';
+                });
+            }
+
+            if(galleryOption) {
+                galleryOption.addEventListener('click', () => {
+                    selectFileInput.click();
+                });
+            }
+
+            if(cameraOption) {
+                cameraOption.addEventListener('click', () => {
+                    closeSelectModal();
+                    cameraModal.classList.add('active');
+                    initCamera(currentCamera);
+                });
+            }
+
+            if(selectFileInput) {
+                selectFileInput.addEventListener('change', () => {
+                    if(selectFileInput.files.length) {
+                        handleFileSelect(selectFileInput.files[0]);
+                    }
+                });
+            }
+
+            if(selectUploadArea) {
+                selectUploadArea.addEventListener('click', () => selectFileInput.click());
+                
+                selectUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    selectUploadArea.style.background = '#f1f5f9';
+                });
+                
+                selectUploadArea.addEventListener('dragleave', () => {
+                    selectUploadArea.style.background = 'transparent';
+                });
+                
+                selectUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    selectUploadArea.style.background = 'transparent';
+                    if(e.dataTransfer.files.length) {
+                        handleFileSelect(e.dataTransfer.files[0]);
+                    }
+                });
+            }
+
+            // Événements pour la caméra
+            if(switchCameraBtn) {
+                switchCameraBtn.addEventListener('click', switchCamera);
+            }
+
+            if(captureBtn) {
+                captureBtn.addEventListener('click', capturePhoto);
+            }
+
+            if(cameraSelect) {
+                cameraSelect.addEventListener('change', async (e) => {
+                    const index = e.target.value;
+                    if (index !== '' && cameras[index]) {
+                        // Arrêter le flux actuel
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                        
+                        const constraints = {
+                            video: { deviceId: { exact: cameras[index].deviceId } },
+                            audio: false
+                        };
+                        
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia(constraints);
+                            cameraFeed.srcObject = stream;
+                            cameraMessage.innerHTML = '<i class="fa-solid fa-check-circle" style="color: var(--success);"></i> Caméra prête !';
+                        } catch (err) {
+                            console.error('Erreur changement caméra:', err);
+                        }
+                    }
+                });
+            }
+
+            // Fermeture des modals
+            if(selectModalClose) selectModalClose.addEventListener('click', closeSelectModal);
+            if(cameraModalClose) cameraModalClose.addEventListener('click', closeCameraModal);
+            if(cancelCameraBtn) cancelCameraBtn.addEventListener('click', closeCameraModal);
+            if(cropModalClose) cropModalClose.addEventListener('click', closeCropModal);
+            if(cancelCropBtn) cancelCropBtn.addEventListener('click', () => {
+                closeCropModal();
+                selectModal.classList.add('active');
+            });
+
+            // Fermeture en cliquant à l'extérieur
+            selectModal.addEventListener('click', (e) => {
+                if(e.target === selectModal) closeSelectModal();
+            });
+            
+            cameraModal.addEventListener('click', (e) => {
+                if(e.target === cameraModal) closeCameraModal();
+            });
+            
+            cropModal.addEventListener('click', (e) => {
+                if(e.target === cropModal) closeCropModal();
+            });
+
             // Appliquer le recadrage
             if(cropBtn) {
                 cropBtn.addEventListener('click', () => {
@@ -2235,13 +2543,8 @@ body {
                             imageSmoothingQuality: 'high'
                         });
                         
-                        // Convertir en base64
-                        const croppedImageData = canvas.toDataURL(currentFile.type);
-                        
-                        // Mettre dans le champ caché
+                        const croppedImageData = canvas.toDataURL(currentFile ? currentFile.type : 'image/jpeg');
                         croppedImageInput.value = croppedImageData;
-                        
-                        // Soumettre le formulaire
                         cropForm.submit();
                     }
                 });

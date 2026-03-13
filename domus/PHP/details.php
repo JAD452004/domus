@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "data.php"; 
+require_once "data.php";
 
 // Vérifie si l'utilisateur est connecté en tant que client
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'client' || !isset($_SESSION['user_id'])) {
@@ -13,7 +13,6 @@ if (isset($_SESSION['user_id']) && isset($_GET['id'])) {
     $id_user = $_SESSION['user_id'];
     $id_maison = (int)$_GET['id'];
     
-    // Vérifier si la table vues_recentes existe
     $check_table = $db->query("SHOW TABLES LIKE 'vues_recentes'");
     if ($check_table && $check_table->num_rows > 0) {
         $sql_vue = "INSERT INTO vues_recentes (id_user, id_maison) VALUES (?, ?)";
@@ -50,23 +49,20 @@ while ($row = $res_gal->fetch_assoc()) {
 
 $nom_user = isset($_SESSION['nom']) ? $_SESSION['nom'] : "Utilisateur";
 $id_client = $_SESSION['user_id'];
+$transaction_type = $bien['transaction_type'] ?? 'vente';
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($bien['titre']); ?> - DOMUS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="../DOMUS IMAGE/ChatGPT_Image_10_déc._2025__21_34_36-removebg-preview.png" type="image/png">
-    
-    <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../STYLE/accueilClient.css">
-
     <style>
-        /* Styles supplémentaires spécifiques à details.php */
         :root {
             --primary: #2563eb;
             --primary-dark: #1e40af;
@@ -92,14 +88,12 @@ $id_client = $_SESSION['user_id'];
         img { max-width: 100%; height: auto; display: block; }
         a { text-decoration: none; color: inherit; }
 
-        /* Container principal */
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 16px;
         }
 
-        /* Alert message */
         .alert {
             background: #d1fae5;
             color: #065f46;
@@ -112,7 +106,6 @@ $id_client = $_SESSION['user_id'];
             border: 1px solid #a7f3d0;
         }
 
-        /* Grid layout */
         .layout-grid {
             display: grid;
             gap: 24px;
@@ -127,7 +120,6 @@ $id_client = $_SESSION['user_id'];
             .container { margin-top: 40px; }
         }
 
-        /* Gallery */
         .gallery-card {
             background: var(--bg-card);
             border-radius: var(--radius);
@@ -174,7 +166,6 @@ $id_client = $_SESSION['user_id'];
             box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
         }
 
-        /* Info card */
         .info-card {
             background: var(--bg-card);
             border-radius: var(--radius);
@@ -225,6 +216,27 @@ $id_client = $_SESSION['user_id'];
             font-size: 1rem;
             font-weight: 500;
             color: var(--text-muted);
+        }
+
+        .transaction-badge-price {
+            font-size: 1rem;
+            margin-left: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+        
+        .transaction-badge-price.vente {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .transaction-badge-price.location {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
         }
 
         .specs {
@@ -297,7 +309,6 @@ $id_client = $_SESSION['user_id'];
         }
         .btn-secondary:hover { background: #eff6ff; }
 
-        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -357,31 +368,27 @@ $id_client = $_SESSION['user_id'];
 </head>
 <body>
 
-    <!-- NAVBAR avec inclusion du fichier _user_avatar.php -->
     <nav class="navbar">
         <div class="logo">
             <img src="../DOMUS IMAGE/ChatGPT_Image_10_déc._2025__21_34_36-removebg-preview.png" alt="DOMUS Logo">
             <div class="logo-text">DOM<span>US</span></div>
         </div>
         <ul class="nav-links" id="navLinks">
-            <li><a href="../Accueil/accueilClient.php"><i class="fa-solid fa-house"></i> <span>Accueil</span></a></li>
-            <li><a href="../Accueil/client.php"><i class="fa-solid fa-chart-line"></i> <span>Tableau de Bord</span></a></li>
-            <li><a href="../Accueil/contact.php"><i class="fa-solid fa-envelope"></i> <span>Contact</span></a></li>
+            <li><a href="../Accueil/accueilClient.php"><i class="fa-solid fa-house"></i> Accueil</a></li>
+            <li><a href="../Accueil/client.php"><i class="fa-solid fa-chart-line"></i> Tableau de Bord</a></li>
+            <li><a href="../Accueil/contact.php"><i class="fa-solid fa-envelope"></i> Contact</a></li>
         </ul>
         <div class="user-area">
             <div class="user-info">
                 <?php 
-                // Définir les variables nécessaires pour _user_avatar.php
                 $nom_complet = $nom_user;
-                include __DIR__ . '/../Accueil/_user_avatar.php'; 
+                $initial = strtoupper(substr($nom_complet, 0, 1));
+                echo '<div class="user-avatar">' . $initial . '</div>';
                 ?>
+                <span class="user-name"><?php echo htmlspecialchars($nom_user); ?></span>
             </div>
-            <a href="../PHP/logout.php" class="logout-btn" title="Déconnexion">
-                <i class="fa-solid fa-power-off"></i>
-            </a>
-            <div class="mobile-toggle" id="mobileMenuBtn">
-                <i class="fa-solid fa-bars"></i>
-            </div>
+            <a href="../PHP/logout.php" class="logout-btn"><i class="fa-solid fa-power-off"></i></a>
+            <div class="mobile-toggle" id="mobileMenuBtn"><i class="fa-solid fa-bars"></i></div>
         </div>
     </nav>
 
@@ -421,8 +428,19 @@ $id_client = $_SESSION['user_id'];
                     <i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($bien['ville']); ?>
                 </div>
                 
+                <!-- PRIX AVEC BADGE VENTE/LOCATION -->
                 <div class="price">
-                    <?php echo number_format($bien['prix'], 0, ',', ' '); ?> <small>XOF</small>
+                    <?php echo number_format($bien['prix'], 0, ',', ' '); ?> 
+                    <small>XOF</small>
+                    <?php if ($transaction_type === 'location'): ?>
+                        <span class="transaction-badge-price location">
+                            <i class="fa-solid fa-calendar-alt"></i> Location
+                        </span>
+                    <?php else: ?>
+                        <span class="transaction-badge-price vente">
+                            <i class="fa-solid fa-tag"></i> Vente
+                        </span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="specs">
@@ -492,21 +510,17 @@ $id_client = $_SESSION['user_id'];
                 document.getElementById('main-view').src = url;
                 document.getElementById('main-view').style.opacity = '1';
             }, 150);
-
             document.querySelectorAll('.thumb').forEach(img => img.classList.remove('active'));
             el.classList.add('active');
         }
 
-        // Menu mobile
         document.addEventListener("DOMContentLoaded", function() {
             const mobileToggle = document.getElementById('mobileMenuBtn');
             const navLinks = document.getElementById('navLinks');
-            
             if (mobileToggle && navLinks) {
                 mobileToggle.addEventListener('click', function(e) {
                     e.stopPropagation();
                     navLinks.classList.toggle('active');
-                    
                     const icon = this.querySelector('i');
                     if (navLinks.classList.contains('active')) {
                         icon.classList.remove('fa-bars');
@@ -518,7 +532,6 @@ $id_client = $_SESSION['user_id'];
                         document.body.style.overflow = '';
                     }
                 });
-                
                 document.addEventListener('click', function(event) {
                     if (!mobileToggle.contains(event.target) && !navLinks.contains(event.target)) {
                         navLinks.classList.remove('active');

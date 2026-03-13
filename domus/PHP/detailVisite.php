@@ -12,10 +12,17 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'client' || !isset($_SESS
 if (isset($_SESSION['user_id']) && isset($_GET['id'])) {
     $id_user = $_SESSION['user_id'];
     $id_maison = (int)$_GET['id'];
-    $sql_vue = "INSERT INTO vues_recentes (id_user, id_maison) VALUES (?, ?)";
-    $stmt_vue = $db->prepare($sql_vue);
-    $stmt_vue->bind_param("ii", $id_user, $id_maison);
-    $stmt_vue->execute();
+    
+    // Vérifier si la table vues_recentes existe
+    $check_table = $db->query("SHOW TABLES LIKE 'vues_recentes'");
+    if ($check_table && $check_table->num_rows > 0) {
+        $sql_vue = "INSERT INTO vues_recentes (id_user, id_maison) VALUES (?, ?)";
+        $stmt_vue = $db->prepare($sql_vue);
+        if ($stmt_vue) {
+            $stmt_vue->bind_param("ii", $id_user, $id_maison);
+            $stmt_vue->execute();
+        }
+    }
 }
 
 // 2. Infos de la maison
@@ -54,12 +61,11 @@ $id_client = $_SESSION['user_id'];
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="../DOMUS IMAGE/ChatGPT_Image_10_déc._2025__21_34_36-removebg-preview.png" type="image/png">
     
-    <!-- Google Fonts: Poppins (même que accueilClient) -->
+    <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../STYLE/accueilClient.css">
 
     <style>
-        /* Styles supplémentaires spécifiques à details.php */
         :root {
             --primary: #2563eb;
             --primary-dark: #1e40af;
@@ -85,14 +91,12 @@ $id_client = $_SESSION['user_id'];
         img { max-width: 100%; height: auto; display: block; }
         a { text-decoration: none; color: inherit; }
 
-        /* Container principal */
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 16px;
         }
 
-        /* Alert message */
         .alert {
             background: #d1fae5;
             color: #065f46;
@@ -105,7 +109,6 @@ $id_client = $_SESSION['user_id'];
             border: 1px solid #a7f3d0;
         }
 
-        /* Grid layout */
         .layout-grid {
             display: grid;
             gap: 24px;
@@ -120,7 +123,6 @@ $id_client = $_SESSION['user_id'];
             .container { margin-top: 40px; }
         }
 
-        /* Gallery */
         .gallery-card {
             background: var(--bg-card);
             border-radius: var(--radius);
@@ -167,7 +169,6 @@ $id_client = $_SESSION['user_id'];
             box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
         }
 
-        /* Info card */
         .info-card {
             background: var(--bg-card);
             border-radius: var(--radius);
@@ -218,6 +219,28 @@ $id_client = $_SESSION['user_id'];
             font-size: 1rem;
             font-weight: 500;
             color: var(--text-muted);
+        }
+
+        /* NOUVEAU : Badge Vente/Location dans le prix */
+        .transaction-badge-price {
+            font-size: 1rem;
+            margin-left: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+        
+        .transaction-badge-price.vente {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .transaction-badge-price.location {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
         }
 
         .specs {
@@ -290,7 +313,6 @@ $id_client = $_SESSION['user_id'];
         }
         .btn-secondary:hover { background: #eff6ff; }
 
-        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -350,7 +372,7 @@ $id_client = $_SESSION['user_id'];
 </head>
 <body>
 
-    <!-- NAVBAR (exactement comme accueilClient.php avec l'utilisateur connecté) -->
+    <!-- NAVBAR -->
     <nav class="navbar">
         <div class="logo">
             <img src="../DOMUS IMAGE/ChatGPT_Image_10_déc._2025__21_34_36-removebg-preview.png" alt="DOMUS Logo">
@@ -363,7 +385,10 @@ $id_client = $_SESSION['user_id'];
         </ul>
         <div class="user-area">
             <div class="user-info">
-                <?php include __DIR__ . '/../Accueil/_user_avatar.php'; ?>
+                <?php 
+                $nom_complet = $nom_user;
+                include __DIR__ . '/../Accueil/_user_avatar.php'; 
+                ?>
             </div>
             <a href="../PHP/logout.php" class="logout-btn" title="Déconnexion">
                 <i class="fa-solid fa-power-off"></i>
@@ -410,8 +435,22 @@ $id_client = $_SESSION['user_id'];
                     <i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($bien['ville']); ?>
                 </div>
                 
+                <!-- PRIX AVEC BADGE VENTE/LOCATION -->
                 <div class="price">
-                    <?php echo number_format($bien['prix'], 0, ',', ' '); ?> <small>XOF</small>
+                    <?php echo number_format($bien['prix'], 0, ',', ' '); ?> 
+                    <small>XOF</small>
+                    <?php 
+                    $transaction_type = $bien['transaction_type'] ?? 'vente';
+                    if ($transaction_type === 'location'): 
+                    ?>
+                        <span class="transaction-badge-price location">
+                            <i class="fa-solid fa-calendar-alt"></i> Location
+                        </span>
+                    <?php else: ?>
+                        <span class="transaction-badge-price vente">
+                            <i class="fa-solid fa-tag"></i> Vente
+                        </span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="specs">
@@ -486,7 +525,7 @@ $id_client = $_SESSION['user_id'];
             el.classList.add('active');
         }
 
-        // Menu mobile (copié depuis accueilClient.php)
+        // Menu mobile
         document.addEventListener("DOMContentLoaded", function() {
             const mobileToggle = document.getElementById('mobileMenuBtn');
             const navLinks = document.getElementById('navLinks');

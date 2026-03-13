@@ -22,9 +22,21 @@ if (isset($_POST['ajouter_propriete'])) {
     $id_pro = $_SESSION['user_id'];
     $titre = $db->real_escape_string($_POST['titre']);
     
-    // Nettoyage du prix
-    $prix_raw = str_replace(' ', '', $_POST['prix']);
-    $prix = floatval($prix_raw);
+    // ===== CORRECTION 1 : Nettoyage RADICAL du prix =====
+    $prix_raw = $_POST['prix'];
+    // On ne garde QUE les chiffres (0-9), on supprime TOUT le reste
+    $prix_nettoye = preg_replace('/[^0-9]/', '', $prix_raw);
+    $prix = floatval($prix_nettoye);
+    
+    // Sécurité : si le résultat est vide, on met 0
+    if (empty($prix_nettoye)) {
+        $prix = 0;
+        $error_msg = "Le prix doit être un nombre valide.";
+    }
+    // ===== FIN CORRECTION 1 =====
+    
+    // Récupérer le type de transaction
+    $transaction_type = $_POST['transaction_type'];
     
     $ville = $db->real_escape_string($_POST['ville']);
     $type = $_POST['type_bien'];
@@ -42,7 +54,6 @@ if (isset($_POST['ajouter_propriete'])) {
     if (!file_exists($upload_dir)) mkdir($upload_dir, 0777, true);
     if (!file_exists($papier_dir)) mkdir($papier_dir, 0777, true);
 
-    // Fonction utilitaire d'upload
     function uploadFile($input_name, $destination) {
         if (isset($_FILES[$input_name]) && $_FILES[$input_name]['error'] == 0) {
             $ext = strtolower(pathinfo($_FILES[$input_name]["name"], PATHINFO_EXTENSION));
@@ -55,28 +66,36 @@ if (isset($_POST['ajouter_propriete'])) {
         return null;
     }
 
-    // Upload de l'image principale (OBLIGATOIRE)
     $target_main = uploadFile('image', $upload_dir);
 
     if ($target_main) {
-        // Upload des documents juridiques
-        $titre_foncier = uploadFile('papier_titre_foncier', $papier_dir);
-        $attestation = uploadFile('papier_attestation', $papier_dir);
-        $permis_construire = uploadFile('papier_permis_construire', $papier_dir);
-        $certificat_urbanisme = uploadFile('papier_certificat_urbanisme', $papier_dir);
-        $plan_cadastral = uploadFile('papier_cadastre', $papier_dir);
-        $contrat_vente = uploadFile('papier_contrat', $papier_dir);
-        $autres_documents = uploadFile('autres_papiers_file', $papier_dir);
-        $autres_documents_titre = !empty($_POST['autres_papiers_text']) ? $db->real_escape_string($_POST['autres_papiers_text']) : null;
+        $titre_foncier = null;
+        $attestation = null;
+        $permis_construire = null;
+        $certificat_urbanisme = null;
+        $plan_cadastral = null;
+        $contrat_vente = null;
+        $autres_documents = null;
+        $autres_documents_titre = null;
+        
+        if ($transaction_type === 'vente') {
+            $titre_foncier = uploadFile('papier_titre_foncier', $papier_dir);
+            $attestation = uploadFile('papier_attestation', $papier_dir);
+            $permis_construire = uploadFile('papier_permis_construire', $papier_dir);
+            $certificat_urbanisme = uploadFile('papier_certificat_urbanisme', $papier_dir);
+            $plan_cadastral = uploadFile('papier_cadastre', $papier_dir);
+            $contrat_vente = uploadFile('papier_contrat', $papier_dir);
+            $autres_documents = uploadFile('autres_papiers_file', $papier_dir);
+            $autres_documents_titre = !empty($_POST['autres_papiers_text']) ? $db->real_escape_string($_POST['autres_papiers_text']) : null;
+        }
 
-        // Insertion dans la table 'maison'
         $sql = "INSERT INTO maison (
-                    id_pro, titre, prix, ville, type_bien, chambres, salles_bain, surface, 
+                    id_pro, titre, prix, transaction_type, ville, type_bien, chambres, salles_bain, surface, 
                     description, image, titre_foncier, attestation_propriete, 
                     permis_construire, certificat_urbanisme, plan_cadastral, 
                     contrat_vente, autres_documents, autres_documents_titre
                 ) VALUES (
-                    '$id_pro', '$titre', '$prix', '$ville', '$type', '$chambres', '$sdb', '$surface', 
+                    '$id_pro', '$titre', '$prix', '$transaction_type', '$ville', '$type', '$chambres', '$sdb', '$surface', 
                     '$description', '$target_main', 
                     " . ($titre_foncier ? "'$titre_foncier'" : "NULL") . ", 
                     " . ($attestation ? "'$attestation'" : "NULL") . ", 
@@ -91,7 +110,6 @@ if (isset($_POST['ajouter_propriete'])) {
         if ($db->query($sql)) {
             $id_maison = $db->insert_id;
 
-            // Gestion de la Galerie
             if (!empty($_FILES['galerie']['name'][0])) {
                 foreach ($_FILES['galerie']['tmp_name'] as $key => $tmp_name) {
                     if ($_FILES['galerie']['error'][$key] == 0) {
@@ -146,7 +164,6 @@ if (isset($_POST['ajouter_propriete'])) {
             line-height: 1.6;
         }
         
-        /* ========== NAVBAR ORIGINALE ========== */
         .navbar {
             background: white;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -271,7 +288,6 @@ if (isset($_POST['ajouter_propriete'])) {
             background: #f8fafc;
         }
         
-        /* ========== FORMULAIRE ========== */
         .form-container {
             max-width: 900px;
             margin: 40px auto;
@@ -333,7 +349,6 @@ if (isset($_POST['ajouter_propriete'])) {
             transform: translateX(-5px);
         }
         
-        /* Alert messages */
         .alert {
             padding: 16px 20px;
             border-radius: 10px;
@@ -355,7 +370,6 @@ if (isset($_POST['ajouter_propriete'])) {
             color: #065f46;
         }
         
-        /* Form grids */
         .grid-2, .grid-3 {
             display: grid;
             gap: 20px;
@@ -365,7 +379,6 @@ if (isset($_POST['ajouter_propriete'])) {
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-3 { grid-template-columns: repeat(3, 1fr); }
         
-        /* Form groups */
         .form-group {
             margin-bottom: 25px;
         }
@@ -400,7 +413,77 @@ if (isset($_POST['ajouter_propriete'])) {
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
         
-        /* Type selection */
+        .transaction-section {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .transaction-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .transaction-title i {
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+        
+        .transaction-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .transaction-option {
+            flex: 1;
+            min-width: 150px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .transaction-option:hover {
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+        
+        .transaction-option.selected {
+            border-color: var(--secondary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+        
+        .transaction-option i {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .transaction-option span {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .transaction-option small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
         .type-selection {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -440,7 +523,6 @@ if (isset($_POST['ajouter_propriete'])) {
             color: var(--secondary);
         }
         
-        /* Characteristics section */
         .characteristics-box {
             background: #f8fafc;
             border-radius: 12px;
@@ -449,13 +531,17 @@ if (isset($_POST['ajouter_propriete'])) {
             border: 1px solid #e2e8f0;
         }
         
-        /* Papiers section */
         .papiers-section {
             background: #f8fafc;
             border-radius: 12px;
             padding: 25px;
             margin: 25px 0;
             border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .papiers-section.hidden {
+            display: none;
         }
         
         .papiers-grid {
@@ -539,7 +625,6 @@ if (isset($_POST['ajouter_propriete'])) {
             margin-top: 5px;
         }
         
-        /* Section Upload PRINCIPALE */
         .upload-section {
             background: #f8fafc;
             border: 2px dashed #cbd5e1;
@@ -551,14 +636,12 @@ if (isset($_POST['ajouter_propriete'])) {
             opacity: 1 !important;
         }
         
-        /* Autres papiers */
         .autres-papiers {
             margin-top: 25px;
             padding-top: 25px;
             border-top: 2px solid #e2e8f0;
         }
         
-        /* Submit button */
         .btn-submit {
             background: linear-gradient(135deg, var(--secondary), #1d4ed8);
             color: white;
@@ -583,7 +666,6 @@ if (isset($_POST['ajouter_propriete'])) {
             box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
         }
         
-        /* Form help text */
         .form-help {
             font-size: 0.85rem;
             color: var(--text-muted);
@@ -591,14 +673,12 @@ if (isset($_POST['ajouter_propriete'])) {
             display: block;
         }
         
-        /* Textarea specific */
         textarea.form-control {
             min-height: 140px;
             resize: vertical;
             line-height: 1.5;
         }
         
-        /* File info display */
         .file-info {
             display: flex;
             align-items: center;
@@ -614,7 +694,6 @@ if (isset($_POST['ajouter_propriete'])) {
             color: var(--secondary);
         }
         
-        /* Responsive design */
         @media (max-width: 768px) {
             .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
@@ -628,6 +707,15 @@ if (isset($_POST['ajouter_propriete'])) {
                 grid-template-columns: repeat(2, 1fr);
             }
             
+            .transaction-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .transaction-option {
+                min-width: auto;
+            }
+            
             .form-card {
                 padding: 25px;
             }
@@ -636,7 +724,6 @@ if (isset($_POST['ajouter_propriete'])) {
                 font-size: 1.8rem;
             }
             
-            /* Navbar responsive */
             .nav-links {
                 display: none;
                 flex-direction: column;
@@ -752,7 +839,6 @@ if (isset($_POST['ajouter_propriete'])) {
 </head>
 <body>
 
-    <!-- ========== FORMULAIRE ========== -->
     <div class="form-container">
         <a href="../Accueil/propriete.php" class="btn-back">
             <i class="fa-solid fa-arrow-left"></i> Retour au tableau de bord
@@ -788,13 +874,37 @@ if (isset($_POST['ajouter_propriete'])) {
                     <span class="form-help">Un bon titre attire plus d'acheteurs</span>
                 </div>
 
-                <!-- Prix et Ville -->
+                <!-- Type de transaction -->
+                <div class="transaction-section">
+                    <div class="transaction-title">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>Type de transaction</span>
+                    </div>
+                    
+                    <div class="transaction-options">
+                        <div class="transaction-option selected" data-value="vente" onclick="selectTransaction(this)">
+                            <i class="fa-solid fa-tag"></i>
+                            <span>Vente</span>
+                            <small>Prix de vente définitif</small>
+                        </div>
+                        
+                        <div class="transaction-option" data-value="location" onclick="selectTransaction(this)">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                            <span>Location</span>
+                            <small>Loyer mensuel</small>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="transaction_type" id="transaction_type" value="vente" required>
+                </div>
+
+                <!-- ===== CORRECTION 2 : Champ PRIX en type "number" ===== -->
                 <div class="grid-2">
                     <div class="form-group">
-                        <label for="prix" class="required">Prix (FCFA)</label>
-                        <input type="text" id="prix" name="prix" class="form-control" required 
-                               placeholder="250000000" min="0">
-                        <span class="form-help">Prix total de vente en FCFA</span>
+                        <label for="prix" class="required" id="prix-label">Prix de vente (FCFA)</label>
+                        <input type="number" id="prix" name="prix" class="form-control" required 
+                               placeholder="1500000" step="1" min="0">
+                        <span class="form-help" id="prix-help">Prix total de vente en FCFA</span>
                     </div>
                     
                     <div class="form-group">
@@ -804,6 +914,7 @@ if (isset($_POST['ajouter_propriete'])) {
                         <span class="form-help">Commune ou quartier</span>
                     </div>
                 </div>
+                <!-- ===== FIN CORRECTION 2 ===== -->
 
                 <!-- Type de bien -->
                 <div class="form-group">
@@ -853,7 +964,7 @@ if (isset($_POST['ajouter_propriete'])) {
                 </div>
 
                 <!-- Section Papiers -->
-                <div class="papiers-section">
+                <div id="papiersSection" class="papiers-section">
                     <h3 style="margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px;">
                         <i class="fa-solid fa-file-contract"></i> Papiers de la propriété
                     </h3>
@@ -1008,7 +1119,30 @@ if (isset($_POST['ajouter_propriete'])) {
     </div>
 
     <script>
-        // Gestion du type de bien
+        function selectTransaction(element) {
+            document.querySelectorAll('.transaction-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            const transactionType = element.dataset.value;
+            document.getElementById('transaction_type').value = transactionType;
+            
+            const prixLabel = document.getElementById('prix-label');
+            const prixHelp = document.getElementById('prix-help');
+            const papiersSection = document.getElementById('papiersSection');
+            
+            if (transactionType === 'vente') {
+                prixLabel.innerHTML = 'Prix de vente (FCFA) <span style="color:#ef4444;">*</span>';
+                prixHelp.innerHTML = 'Prix total de vente en FCFA';
+                papiersSection.style.display = 'block';
+            } else {
+                prixLabel.innerHTML = 'Loyer mensuel (FCFA) <span style="color:#ef4444;">*</span>';
+                prixHelp.innerHTML = 'Montant du loyer mensuel en FCFA';
+                papiersSection.style.display = 'none';
+            }
+        }
+        
         function selectType(element) {
             document.querySelectorAll('.type-option').forEach(option => {
                 option.classList.remove('selected');
@@ -1034,7 +1168,6 @@ if (isset($_POST['ajouter_propriete'])) {
             }
         }
         
-        // Gestion des papiers avec upload
         function togglePapier(type) {
             const item = document.getElementById('papier-' + type);
             const checkbox = document.getElementById('check_' + type);
@@ -1052,15 +1185,13 @@ if (isset($_POST['ajouter_propriete'])) {
             }
         }
         
-        // Initialisation
         document.addEventListener("DOMContentLoaded", function() {
-            // Initialiser la sélection du type
             document.querySelector('.type-option[data-value="maison"]').classList.add('selected');
             toggleTerrainFields();
             
-            // Validation du formulaire
             document.getElementById('propertyForm').addEventListener('submit', function(e) {
                 const type = document.getElementById('type_bien').value;
+                const transactionType = document.getElementById('transaction_type').value;
                 const surface = document.getElementById('surface').value;
                 const prix = document.getElementById('prix').value;
                 const titre = document.getElementById('titre').value;
@@ -1071,7 +1202,9 @@ if (isset($_POST['ajouter_propriete'])) {
                 if (!titre.trim()) errors.push('Veuillez saisir un titre pour votre annonce.');
                 if (!ville.trim()) errors.push('Veuillez saisir la ville de votre bien.');
                 if (!surface || surface <= 0) errors.push('Veuillez saisir une surface valide (supérieure à 0).');
-                if (!prix || isNaN(parseFloat(prix.replace(/\s/g, ''))) || parseFloat(prix.replace(/\s/g, '')) <= 0) {
+                
+                // CORRECTION : validation du prix (le navigateur nous envoie déjà un nombre)
+                if (!prix || isNaN(parseFloat(prix)) || parseFloat(prix) <= 0) {
                     errors.push('Veuillez saisir un prix valide (supérieur à 0).');
                 }
                 
@@ -1083,29 +1216,28 @@ if (isset($_POST['ajouter_propriete'])) {
                     }
                 }
                 
-                // Validation de l'image principale
                 const mainImage = document.querySelector('input[name="image"]');
                 if (!mainImage.files.length) {
                     errors.push('Veuillez sélectionner une photo principale pour votre annonce.');
                 }
                 
-                // Validation des papiers (optionnel mais recommandé)
-                const papiersTypes = ['titre_foncier', 'attestation', 'permis_construire', 'certificat_urbanisme', 'cadastre', 'contrat'];
-                papiersTypes.forEach(papierType => {
-                    const checkbox = document.getElementById('check_' + papierType);
-                    const fileInput = document.getElementById('file_' + papierType);
+                if (transactionType === 'vente') {
+                    const papiersTypes = ['titre_foncier', 'attestation', 'permis_construire', 'certificat_urbanisme', 'cadastre', 'contrat'];
+                    papiersTypes.forEach(papierType => {
+                        const checkbox = document.getElementById('check_' + papierType);
+                        const fileInput = document.getElementById('file_' + papierType);
+                        
+                        if (checkbox.checked && (!fileInput.files || fileInput.files.length === 0)) {
+                            const nomPapier = document.querySelector('#papier-' + papierType + ' .papier-title').textContent;
+                            errors.push('Veuillez télécharger un fichier pour : ' + nomPapier);
+                        }
+                    });
                     
-                    if (checkbox.checked && (!fileInput.files || fileInput.files.length === 0)) {
-                        const nomPapier = document.querySelector('#papier-' + papierType + ' .papier-title').textContent;
-                        errors.push('Veuillez télécharger un fichier pour : ' + nomPapier);
+                    const autresText = document.getElementById('autres_papiers_text').value;
+                    const autresFile = document.getElementById('file_autres_papiers');
+                    if (autresText.trim() && (!autresFile.files || autresFile.files.length === 0)) {
+                        errors.push('Si vous indiquez d\'autres documents, veuillez télécharger un fichier.');
                     }
-                });
-                
-                // Validation des autres papiers
-                const autresText = document.getElementById('autres_papiers_text').value;
-                const autresFile = document.getElementById('file_autres_papiers');
-                if (autresText.trim() && (!autresFile.files || autresFile.files.length === 0)) {
-                    errors.push('Si vous indiquez d\'autres documents, veuillez télécharger un fichier.');
                 }
                 
                 if (errors.length > 0) {
@@ -1117,7 +1249,9 @@ if (isset($_POST['ajouter_propriete'])) {
                 return true;
             });
             
-            // Formater le prix
+            // ===== CORRECTION 3 : SUPPRESSION des écouteurs qui causaient le problème =====
+            // Ces lignes ont été commentées car elles interfèrent avec le type="number"
+            /*
             const prixInput = document.getElementById('prix');
             prixInput.addEventListener('blur', function() {
                 let value = this.value.replace(/\D/g, '');
@@ -1129,8 +1263,9 @@ if (isset($_POST['ajouter_propriete'])) {
             prixInput.addEventListener('focus', function() {
                 this.value = this.value.replace(/\s/g, '');
             });
+            */
+            // ===== FIN CORRECTION 3 =====
             
-            // Prévisualisation des fichiers
             const fileInputs = document.querySelectorAll('input[type="file"]');
             fileInputs.forEach(input => {
                 input.addEventListener('change', function() {

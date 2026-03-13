@@ -42,8 +42,23 @@ $propriete = $result->fetch_assoc();
 // Traitement de la modification si le formulaire est soumis
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])) {
     $titre = $db->real_escape_string($_POST['titre']);
-    $prix_raw = str_replace(' ', '', $_POST['prix']);
-    $prix = floatval($prix_raw);
+    
+    // ===== CORRECTION 1 : Nettoyage RADICAL du prix =====
+    $prix_raw = $_POST['prix'];
+    // On ne garde QUE les chiffres (0-9), on supprime TOUT le reste
+    $prix_nettoye = preg_replace('/[^0-9]/', '', $prix_raw);
+    $prix = floatval($prix_nettoye);
+    
+    // Sécurité : si le résultat est vide, on met 0
+    if (empty($prix_nettoye)) {
+        $prix = 0;
+        $error_msg = "Le prix doit être un nombre valide.";
+    }
+    // ===== FIN CORRECTION 1 =====
+    
+    // Récupérer le type de transaction
+    $transaction_type = $_POST['transaction_type']; // 'vente' ou 'location'
+    
     $ville = $db->real_escape_string($_POST['ville']);
     $type = $_POST['type_bien'];
     $surface = (int)$_POST['surface'];
@@ -60,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
     if (!file_exists($upload_dir)) mkdir($upload_dir, 0777, true);
     if (!file_exists($papier_dir)) mkdir($papier_dir, 0777, true);
 
-    // Fonction utilitaire d'upload
     function uploadFile($input_name, $destination) {
         if (isset($_FILES[$input_name]) && $_FILES[$input_name]['error'] == 0) {
             $ext = strtolower(pathinfo($_FILES[$input_name]["name"], PATHINFO_EXTENSION));
@@ -77,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
     $sql = "UPDATE maison SET 
             titre = ?, 
             prix = ?, 
+            transaction_type = ?,
             ville = ?, 
             type_bien = ?, 
             chambres = ?, 
@@ -86,9 +101,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             WHERE id_maison = ? AND id_pro = ?";
     
     $stmt_update = $db->prepare($sql);
+    
+    // 11 variables avec 11 types
     $stmt_update->bind_param(
-        "sdssiiisii", 
-        $titre, $prix, $ville, $type, $chambres, $sdb, $surface, $description, $id_maison, $id_pro
+        "sdsssiisiii", 
+        $titre,           // s
+        $prix,            // d
+        $transaction_type, // s
+        $ville,           // s
+        $type,            // s
+        $chambres,        // i
+        $sdb,             // i
+        $surface,         // i
+        $description,     // s
+        $id_maison,       // i
+        $id_pro           // i
     );
     
     if ($stmt_update->execute()) {
@@ -107,77 +134,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             }
         }
 
-        // Upload des nouveaux documents juridiques
-        $titre_foncier = uploadFile('papier_titre_foncier', $papier_dir);
-        $attestation = uploadFile('papier_attestation', $papier_dir);
-        $permis_construire = uploadFile('papier_permis_construire', $papier_dir);
-        $certificat_urbanisme = uploadFile('papier_certificat_urbanisme', $papier_dir);
-        $plan_cadastral = uploadFile('papier_cadastre', $papier_dir);
-        $contrat_vente = uploadFile('papier_contrat', $papier_dir);
-        $autres_documents = uploadFile('autres_papiers_file', $papier_dir);
-        $autres_documents_titre = !empty($_POST['autres_papiers_text']) ? $db->real_escape_string($_POST['autres_papiers_text']) : null;
+        // Upload des nouveaux documents juridiques (seulement pour les ventes)
+        if ($transaction_type === 'vente') {
+            $titre_foncier = uploadFile('papier_titre_foncier', $papier_dir);
+            $attestation = uploadFile('papier_attestation', $papier_dir);
+            $permis_construire = uploadFile('papier_permis_construire', $papier_dir);
+            $certificat_urbanisme = uploadFile('papier_certificat_urbanisme', $papier_dir);
+            $plan_cadastral = uploadFile('papier_cadastre', $papier_dir);
+            $contrat_vente = uploadFile('papier_contrat', $papier_dir);
+            $autres_documents = uploadFile('autres_papiers_file', $papier_dir);
+            $autres_documents_titre = !empty($_POST['autres_papiers_text']) ? $db->real_escape_string($_POST['autres_papiers_text']) : null;
 
-        // Mettre à jour les papiers si de nouveaux fichiers sont uploadés
-        $update_papiers = "UPDATE maison SET ";
-        $updates = [];
-        
-        if ($titre_foncier) {
-            // Supprimer l'ancien fichier
-            if (!empty($propriete['titre_foncier']) && file_exists($propriete['titre_foncier'])) {
-                unlink($propriete['titre_foncier']);
+            // Mettre à jour les papiers si de nouveaux fichiers sont uploadés
+            $update_papiers = "UPDATE maison SET ";
+            $updates = [];
+            
+            if ($titre_foncier) {
+                if (!empty($propriete['titre_foncier']) && file_exists($propriete['titre_foncier'])) {
+                    unlink($propriete['titre_foncier']);
+                }
+                $updates[] = "titre_foncier = '$titre_foncier'";
             }
-            $updates[] = "titre_foncier = '$titre_foncier'";
-        }
-        
-        if ($attestation) {
-            if (!empty($propriete['attestation_propriete']) && file_exists($propriete['attestation_propriete'])) {
-                unlink($propriete['attestation_propriete']);
+            
+            if ($attestation) {
+                if (!empty($propriete['attestation_propriete']) && file_exists($propriete['attestation_propriete'])) {
+                    unlink($propriete['attestation_propriete']);
+                }
+                $updates[] = "attestation_propriete = '$attestation'";
             }
-            $updates[] = "attestation_propriete = '$attestation'";
-        }
-        
-        if ($permis_construire) {
-            if (!empty($propriete['permis_construire']) && file_exists($propriete['permis_construire'])) {
-                unlink($propriete['permis_construire']);
+            
+            if ($permis_construire) {
+                if (!empty($propriete['permis_construire']) && file_exists($propriete['permis_construire'])) {
+                    unlink($propriete['permis_construire']);
+                }
+                $updates[] = "permis_construire = '$permis_construire'";
             }
-            $updates[] = "permis_construire = '$permis_construire'";
-        }
-        
-        if ($certificat_urbanisme) {
-            if (!empty($propriete['certificat_urbanisme']) && file_exists($propriete['certificat_urbanisme'])) {
-                unlink($propriete['certificat_urbanisme']);
+            
+            if ($certificat_urbanisme) {
+                if (!empty($propriete['certificat_urbanisme']) && file_exists($propriete['certificat_urbanisme'])) {
+                    unlink($propriete['certificat_urbanisme']);
+                }
+                $updates[] = "certificat_urbanisme = '$certificat_urbanisme'";
             }
-            $updates[] = "certificat_urbanisme = '$certificat_urbanisme'";
-        }
-        
-        if ($plan_cadastral) {
-            if (!empty($propriete['plan_cadastral']) && file_exists($propriete['plan_cadastral'])) {
-                unlink($propriete['plan_cadastral']);
+            
+            if ($plan_cadastral) {
+                if (!empty($propriete['plan_cadastral']) && file_exists($propriete['plan_cadastral'])) {
+                    unlink($propriete['plan_cadastral']);
+                }
+                $updates[] = "plan_cadastral = '$plan_cadastral'";
             }
-            $updates[] = "plan_cadastral = '$plan_cadastral'";
-        }
-        
-        if ($contrat_vente) {
-            if (!empty($propriete['contrat_vente']) && file_exists($propriete['contrat_vente'])) {
-                unlink($propriete['contrat_vente']);
+            
+            if ($contrat_vente) {
+                if (!empty($propriete['contrat_vente']) && file_exists($propriete['contrat_vente'])) {
+                    unlink($propriete['contrat_vente']);
+                }
+                $updates[] = "contrat_vente = '$contrat_vente'";
             }
-            $updates[] = "contrat_vente = '$contrat_vente'";
-        }
-        
-        if ($autres_documents) {
-            if (!empty($propriete['autres_documents']) && file_exists($propriete['autres_documents'])) {
-                unlink($propriete['autres_documents']);
+            
+            if ($autres_documents) {
+                if (!empty($propriete['autres_documents']) && file_exists($propriete['autres_documents'])) {
+                    unlink($propriete['autres_documents']);
+                }
+                $updates[] = "autres_documents = '$autres_documents'";
             }
-            $updates[] = "autres_documents = '$autres_documents'";
-        }
-        
-        if ($autres_documents_titre !== null) {
-            $updates[] = "autres_documents_titre = '$autres_documents_titre'";
-        }
-        
-        if (!empty($updates)) {
-            $update_papiers .= implode(", ", $updates) . " WHERE id_maison = $id_maison";
-            $db->query($update_papiers);
+            
+            if ($autres_documents_titre !== null) {
+                $updates[] = "autres_documents_titre = '$autres_documents_titre'";
+            }
+            
+            if (!empty($updates)) {
+                $update_papiers .= implode(", ", $updates) . " WHERE id_maison = $id_maison";
+                $db->query($update_papiers);
+            }
         }
 
         // Gestion de la Galerie
@@ -232,7 +260,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             line-height: 1.6;
         }
         
-        /* ========== FORMULAIRE ========== */
         .form-container {
             max-width: 900px;
             margin: 40px auto;
@@ -294,7 +321,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             transform: translateX(-5px);
         }
         
-        /* Alert messages */
         .alert {
             padding: 16px 20px;
             border-radius: 10px;
@@ -316,7 +342,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             color: #065f46;
         }
         
-        /* Form grids */
         .grid-2, .grid-3 {
             display: grid;
             gap: 20px;
@@ -326,7 +351,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-3 { grid-template-columns: repeat(3, 1fr); }
         
-        /* Form groups */
         .form-group {
             margin-bottom: 25px;
         }
@@ -361,7 +385,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
         
-        /* Type selection */
+        .transaction-section {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .transaction-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .transaction-title i {
+            color: var(--secondary);
+            font-size: 1.2rem;
+        }
+        
+        .transaction-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .transaction-option {
+            flex: 1;
+            min-width: 150px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .transaction-option:hover {
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+        
+        .transaction-option.selected {
+            border-color: var(--secondary);
+            background: rgba(37, 99, 235, 0.05);
+        }
+        
+        .transaction-option i {
+            font-size: 2rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .transaction-option span {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .transaction-option small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        
         .type-selection {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -401,7 +495,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             color: var(--secondary);
         }
         
-        /* Characteristics section */
         .characteristics-box {
             background: #f8fafc;
             border-radius: 12px;
@@ -410,13 +503,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             border: 1px solid #e2e8f0;
         }
         
-        /* Papiers section */
         .papiers-section {
             background: #f8fafc;
             border-radius: 12px;
             padding: 25px;
             margin: 25px 0;
             border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .papiers-section.hidden {
+            display: none;
         }
         
         .papiers-grid {
@@ -500,7 +597,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             margin-top: 5px;
         }
         
-        /* Section Upload PRINCIPALE */
         .upload-section {
             background: #f8fafc;
             border: 2px dashed #cbd5e1;
@@ -512,7 +608,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             opacity: 1 !important;
         }
         
-        /* Current file display */
         .current-file {
             display: flex;
             align-items: center;
@@ -539,14 +634,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             text-decoration: underline;
         }
         
-        /* Autres papiers */
         .autres-papiers {
             margin-top: 25px;
             padding-top: 25px;
             border-top: 2px solid #e2e8f0;
         }
         
-        /* Submit button */
         .btn-submit {
             background: linear-gradient(135deg, var(--secondary), #1d4ed8);
             color: white;
@@ -571,7 +664,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
         }
         
-        /* Form help text */
         .form-help {
             font-size: 0.85rem;
             color: var(--text-muted);
@@ -579,14 +671,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             display: block;
         }
         
-        /* Textarea specific */
         textarea.form-control {
             min-height: 140px;
             resize: vertical;
             line-height: 1.5;
         }
         
-        /* File info display */
         .file-info {
             display: flex;
             align-items: center;
@@ -602,7 +692,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             color: var(--secondary);
         }
         
-        /* Current image */
         .current-image {
             margin-top: 15px;
             display: flex;
@@ -617,7 +706,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
-        /* Responsive design */
         @media (max-width: 768px) {
             .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
@@ -629,6 +717,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             
             .type-selection {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .transaction-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .transaction-option {
+                min-width: auto;
             }
             
             .form-card {
@@ -708,7 +805,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
 </head>
 <body>
 
-    <!-- ========== FORMULAIRE ========== -->
     <div class="form-container">
         <a href="../Accueil/propriete.php" class="btn-back">
             <i class="fa-solid fa-arrow-left"></i> Retour au tableau de bord
@@ -744,13 +840,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                     <span class="form-help">Un bon titre attire plus d'acheteurs</span>
                 </div>
 
-                <!-- Prix et Ville -->
+                <!-- Type de transaction -->
+                <div class="transaction-section">
+                    <div class="transaction-title">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>Type de transaction</span>
+                    </div>
+                    
+                    <div class="transaction-options">
+                        <div class="transaction-option <?php echo ($propriete['transaction_type'] ?? 'vente') == 'vente' ? 'selected' : ''; ?>" 
+                             data-value="vente" onclick="selectTransaction(this)">
+                            <i class="fa-solid fa-tag"></i>
+                            <span>Vente</span>
+                            <small>Prix de vente définitif</small>
+                        </div>
+                        
+                        <div class="transaction-option <?php echo ($propriete['transaction_type'] ?? '') == 'location' ? 'selected' : ''; ?>" 
+                             data-value="location" onclick="selectTransaction(this)">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                            <span>Location</span>
+                            <small>Loyer mensuel</small>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="transaction_type" id="transaction_type" 
+                           value="<?php echo $propriete['transaction_type'] ?? 'vente'; ?>" required>
+                </div>
+
+                <!-- ===== CORRECTION 2 : Champ PRIX en type "number" ===== -->
                 <div class="grid-2">
                     <div class="form-group">
-                        <label for="prix" class="required">Prix (FCFA)</label>
-                        <input type="text" id="prix" name="prix" class="form-control" required 
-                               value="<?php echo number_format($propriete['prix'], 0, '', ''); ?>">
-                        <span class="form-help">Prix total de vente en FCFA</span>
+                        <label for="prix" class="required" id="prix-label">
+                            <?php echo ($propriete['transaction_type'] ?? 'vente') == 'vente' ? 'Prix de vente' : 'Loyer mensuel'; ?> (FCFA)
+                        </label>
+                        <input type="number" id="prix" name="prix" class="form-control" required 
+                               value="<?php echo (int)$propriete['prix']; ?>" step="1" min="0">
+                        <span class="form-help" id="prix-help">
+                            <?php echo ($propriete['transaction_type'] ?? 'vente') == 'vente' ? 'Prix total de vente' : 'Montant du loyer mensuel'; ?> en FCFA
+                        </span>
                     </div>
                     
                     <div class="form-group">
@@ -760,24 +887,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                         <span class="form-help">Commune ou quartier</span>
                     </div>
                 </div>
+                <!-- ===== FIN CORRECTION 2 ===== -->
 
                 <!-- Type de bien -->
                 <div class="form-group">
                     <label class="required">Type de bien</label>
                     <div class="type-selection">
-                        <div class="type-option" data-value="maison" onclick="selectType(this, '<?php echo $propriete['type_bien']; ?>')">
+                        <div class="type-option <?php echo $propriete['type_bien'] == 'maison' ? 'selected' : ''; ?>" 
+                             data-value="maison" onclick="selectType(this)">
                             <i class="fas fa-house"></i>
                             <span>Maison</span>
                         </div>
-                        <div class="type-option" data-value="villa" onclick="selectType(this, '<?php echo $propriete['type_bien']; ?>')">
+                        <div class="type-option <?php echo $propriete['type_bien'] == 'villa' ? 'selected' : ''; ?>" 
+                             data-value="villa" onclick="selectType(this)">
                             <i class="fas fa-home"></i>
                             <span>Villa</span>
                         </div>
-                        <div class="type-option" data-value="appartement" onclick="selectType(this, '<?php echo $propriete['type_bien']; ?>')">
+                        <div class="type-option <?php echo $propriete['type_bien'] == 'appartement' ? 'selected' : ''; ?>" 
+                             data-value="appartement" onclick="selectType(this)">
                             <i class="fas fa-building"></i>
                             <span>Appartement</span>
                         </div>
-                        <div class="type-option" data-value="terrain" onclick="selectType(this, '<?php echo $propriete['type_bien']; ?>')">
+                        <div class="type-option <?php echo $propriete['type_bien'] == 'terrain' ? 'selected' : ''; ?>" 
+                             data-value="terrain" onclick="selectType(this)">
                             <i class="fas fa-mountain"></i>
                             <span>Terrain</span>
                         </div>
@@ -788,13 +920,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                 <!-- Caractéristiques -->
                 <div class="characteristics-box">
                     <div class="grid-3">
-                        <div class="form-group" id="field-chambres">
+                        <div class="form-group" id="field-chambres" style="<?php echo $propriete['type_bien'] == 'terrain' ? 'display: none;' : ''; ?>">
                             <label for="chambres">Nombre de chambres</label>
                             <input type="number" id="chambres" name="chambres" class="form-control" 
                                    value="<?php echo $propriete['chambres']; ?>" min="0">
                         </div>
                         
-                        <div class="form-group" id="field-sdb">
+                        <div class="form-group" id="field-sdb" style="<?php echo $propriete['type_bien'] == 'terrain' ? 'display: none;' : ''; ?>">
                             <label for="salles_bain">Salles de bain</label>
                             <input type="number" id="salles_bain" name="salles_bain" class="form-control" 
                                    value="<?php echo $propriete['salles_bain']; ?>" min="0">
@@ -808,8 +940,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                     </div>
                 </div>
 
-                <!-- Section Papiers (avec fichiers actuels) -->
-                <div class="papiers-section">
+                <!-- Section Papiers -->
+                <div id="papiersSection" class="papiers-section">
                     <h3 style="margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px;">
                         <i class="fa-solid fa-file-contract"></i> Papiers de la propriété
                     </h3>
@@ -965,7 +1097,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                         <div class="form-group">
                             <label for="autres_papiers_text">Description des autres documents</label>
                             <input type="text" id="autres_papiers_text" name="autres_papiers_text" class="form-control" 
-                                   value="<?php echo htmlspecialchars($propriete['autres_documents_titre']); ?>"
+                                   value="<?php echo htmlspecialchars($propriete['autres_documents_titre'] ?? ''); ?>"
                                    placeholder="Ex: Acte notarié, Certificat de non-gage, Factures...">
                         </div>
                         <?php if (!empty($propriete['autres_documents'])): ?>
@@ -1030,13 +1162,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
     </div>
 
     <script>
-        // Gestion du type de bien
-        function selectType(element, currentType) {
+        function selectTransaction(element) {
+            document.querySelectorAll('.transaction-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            const transactionType = element.dataset.value;
+            document.getElementById('transaction_type').value = transactionType;
+            
+            const prixLabel = document.getElementById('prix-label');
+            const prixHelp = document.getElementById('prix-help');
+            const papiersSection = document.getElementById('papiersSection');
+            
+            if (transactionType === 'vente') {
+                prixLabel.innerHTML = 'Prix de vente (FCFA) <span style="color:#ef4444;">*</span>';
+                prixHelp.innerHTML = 'Prix total de vente en FCFA';
+                papiersSection.style.display = 'block';
+            } else {
+                prixLabel.innerHTML = 'Loyer mensuel (FCFA) <span style="color:#ef4444;">*</span>';
+                prixHelp.innerHTML = 'Montant du loyer mensuel en FCFA';
+                papiersSection.style.display = 'none';
+            }
+        }
+        
+        function selectType(element) {
             document.querySelectorAll('.type-option').forEach(option => {
                 option.classList.remove('selected');
-                if (option.dataset.value === currentType) {
-                    option.classList.add('selected');
-                }
             });
             element.classList.add('selected');
             document.getElementById('type_bien').value = element.dataset.value;
@@ -1051,13 +1203,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             if (type === 'terrain') {
                 champChambres.style.display = 'none';
                 champSdb.style.display = 'none';
+                document.getElementById('chambres').value = '0';
+                document.getElementById('salles_bain').value = '0';
             } else {
                 champChambres.style.display = 'block';
                 champSdb.style.display = 'block';
             }
         }
         
-        // Gestion des papiers avec upload
         function togglePapier(type) {
             const item = document.getElementById('papier-' + type);
             const checkbox = document.getElementById('check_' + type);
@@ -1075,14 +1228,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             }
         }
         
-        // Initialisation
         document.addEventListener("DOMContentLoaded", function() {
-            // Initialiser la sélection du type
-            const currentType = '<?php echo $propriete['type_bien']; ?>';
-            document.querySelector('.type-option[data-value="' + currentType + '"]').classList.add('selected');
             toggleTerrainFields();
             
-            // Validation du formulaire
+            // Initialiser l'affichage de la section papiers
+            const transactionType = document.getElementById('transaction_type').value;
+            const papiersSection = document.getElementById('papiersSection');
+            
+            if (transactionType === 'location') {
+                papiersSection.style.display = 'none';
+            }
+            
             document.getElementById('propertyForm').addEventListener('submit', function(e) {
                 const type = document.getElementById('type_bien').value;
                 const surface = document.getElementById('surface').value;
@@ -1095,7 +1251,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                 if (!titre.trim()) errors.push('Veuillez saisir un titre pour votre annonce.');
                 if (!ville.trim()) errors.push('Veuillez saisir la ville de votre bien.');
                 if (!surface || surface <= 0) errors.push('Veuillez saisir une surface valide (supérieure à 0).');
-                if (!prix || isNaN(parseFloat(prix.replace(/\s/g, ''))) || parseFloat(prix.replace(/\s/g, '')) <= 0) {
+                
+                // CORRECTION : validation du prix (le navigateur nous envoie déjà un nombre)
+                if (!prix || isNaN(parseFloat(prix)) || parseFloat(prix) <= 0) {
                     errors.push('Veuillez saisir un prix valide (supérieur à 0).');
                 }
                 
@@ -1116,7 +1274,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
                 return true;
             });
             
-            // Formater le prix
+            // ===== CORRECTION 3 : SUPPRESSION des écouteurs qui causaient le problème =====
+            // Les lignes suivantes ont été supprimées car elles interfèrent avec le type="number"
+            /*
             const prixInput = document.getElementById('prix');
             prixInput.addEventListener('blur', function() {
                 let value = this.value.replace(/\D/g, '');
@@ -1128,8 +1288,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['modifier_propriete'])
             prixInput.addEventListener('focus', function() {
                 this.value = this.value.replace(/\s/g, '');
             });
+            */
+            // ===== FIN CORRECTION 3 =====
             
-            // Prévisualisation des nouveaux fichiers
             const fileInputs = document.querySelectorAll('input[type="file"]');
             fileInputs.forEach(input => {
                 input.addEventListener('change', function() {

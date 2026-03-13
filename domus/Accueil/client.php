@@ -21,6 +21,10 @@ while ($table = $check_tables->fetch_array()) {
     $tables_existantes[] = $table[0];
 }
 
+// Vérifier si la colonne transaction_type existe
+$check_column = $db->query("SHOW COLUMNS FROM maison LIKE 'transaction_type'");
+$column_exists = $check_column && $check_column->num_rows > 0;
+
 // Initialiser les variables
 $total_favoris = 0;
 $total_vues = 0;
@@ -82,7 +86,6 @@ function getImagePath($image) {
     <link rel="stylesheet" href="../STYLE/accueilClient.css">
     
     <style>
-        /* En-tête du tableau de bord */
         .dashboard-header {
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(37, 99, 235, 0.7)),
                         url("https://images.pexels.com/photos/7031406/pexels-photo-7031406.jpeg") center/cover;
@@ -97,7 +100,6 @@ function getImagePath($image) {
             position: relative;
         }
         
-        /* Lien rendez-vous */
         .rdv-container {
             max-width: 900px;
             margin: 30px auto 0;
@@ -166,7 +168,6 @@ function getImagePath($image) {
             gap: 8px;
         }
         
-        /* Grille des statistiques */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -223,7 +224,6 @@ function getImagePath($image) {
             font-size: 0.95rem;
         }
         
-        /* Styles pour le slider */
         .slider-wrapper {
             position: relative;
             padding: 10px 0 30px 0;
@@ -315,7 +315,6 @@ function getImagePath($image) {
             border-radius: 10px;
         }
 
-        /* Cartes de favoris avec bouton de suppression */
         .favori-btn-dashboard {
             position: absolute;
             top: 15px;
@@ -349,7 +348,6 @@ function getImagePath($image) {
             color: white;
         }
         
-        /* Animation de suppression */
         @keyframes fadeOut {
             to {
                 opacity: 0;
@@ -361,7 +359,6 @@ function getImagePath($image) {
             animation: fadeOut 0.4s ease forwards;
         }
         
-        /* Historique */
         .history-header {
             display: flex;
             justify-content: space-between;
@@ -386,7 +383,6 @@ function getImagePath($image) {
             background: rgba(239, 68, 68, 0.1);
         }
         
-        /* Card image wrapper */
         .card-img-wrapper {
             position: relative;
             width: 100%;
@@ -417,6 +413,32 @@ function getImagePath($image) {
             font-weight: 600;
             z-index: 5;
             backdrop-filter: blur(5px);
+        }
+
+        /* NOUVEAU : Badge Vente/Location */
+        .transaction-badge {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .transaction-badge.vente {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .transaction-badge.location {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
         }
 
         .description {
@@ -455,9 +477,17 @@ function getImagePath($image) {
             color: #10b981;
             font-weight: 700;
             font-size: 1.2rem;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
         }
         
-        /* Styles pour l'avatar */
+        .prix small {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 400;
+        }
+        
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -481,7 +511,21 @@ function getImagePath($image) {
             margin-left: 8px;
         }
         
-        /* Responsive */
+        .no-results {
+            text-align: center;
+            padding: 60px 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            color: #64748b;
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #cbd5e1;
+        }
+        
         @media (max-width: 991px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -645,7 +689,9 @@ function getImagePath($image) {
                 <button class="slider-btn prev"><i class="fas fa-chevron-left"></i></button>
                 
                 <div class="slider-container">
-                    <?php while ($m = $result_fav->fetch_assoc()): ?>
+                    <?php while ($m = $result_fav->fetch_assoc()): 
+                        $prop_transaction = $m['transaction_type'] ?? 'vente';
+                    ?>
                         <div class="maison-card" id="card-<?php echo $m['id_maison']; ?>">
                             <button onclick="event.stopPropagation(); retirerFavori(<?php echo $m['id_maison']; ?>)" 
                                     class="favori-btn-dashboard" title="Retirer des favoris">
@@ -658,6 +704,15 @@ function getImagePath($image) {
                                          class="maison-image" 
                                          alt="<?php echo htmlspecialchars($m['titre'] ?? 'Image'); ?>">
                                     <div class="type-badge"><?php echo $m['type_bien'] ?? 'Propriété'; ?></div>
+                                    
+                                    <!-- Badge Vente/Location -->
+                                    <div class="transaction-badge <?php echo $prop_transaction; ?>">
+                                        <?php if ($prop_transaction === 'vente'): ?>
+                                            <i class="fa-solid fa-tag"></i> Vente
+                                        <?php else: ?>
+                                            <i class="fa-solid fa-calendar-alt"></i> Location
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                                 
                                 <div class="description">
@@ -669,6 +724,9 @@ function getImagePath($image) {
                                     </div>
                                     <div class="prix">
                                         <?php echo number_format($m['prix'] ?? 0, 0, ',', ' '); ?> XOF
+                                        <?php if ($prop_transaction === 'location'): ?>
+                                            <small>/mois</small>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -716,7 +774,9 @@ function getImagePath($image) {
                 <button class="slider-btn prev"><i class="fas fa-chevron-left"></i></button>
                 
                 <div class="slider-container">
-                    <?php while ($v = $result_vues->fetch_assoc()): ?>
+                    <?php while ($v = $result_vues->fetch_assoc()): 
+                        $prop_transaction = $v['transaction_type'] ?? 'vente';
+                    ?>
                         <div class="maison-card" 
                              onclick="window.location.href='../PHP/details.php?id=<?php echo $v['id_maison']; ?>'">
                             <div class="card-img-wrapper">
@@ -724,6 +784,15 @@ function getImagePath($image) {
                                      class="maison-image" 
                                      alt="<?php echo htmlspecialchars($v['titre'] ?? 'Image'); ?>">
                                 <div class="type-badge"><?php echo $v['type_bien'] ?? 'Propriété'; ?></div>
+                                
+                                <!-- Badge Vente/Location -->
+                                <div class="transaction-badge <?php echo $prop_transaction; ?>">
+                                    <?php if ($prop_transaction === 'vente'): ?>
+                                        <i class="fa-solid fa-tag"></i> Vente
+                                    <?php else: ?>
+                                        <i class="fa-solid fa-calendar-alt"></i> Location
+                                    <?php endif; ?>
+                                </div>
                             </div>
                             
                             <div class="description">
@@ -735,6 +804,9 @@ function getImagePath($image) {
                                 </div>
                                 <div class="prix">
                                     <?php echo number_format($v['prix'] ?? 0, 0, ',', ' '); ?> XOF
+                                    <?php if ($prop_transaction === 'location'): ?>
+                                        <small>/mois</small>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

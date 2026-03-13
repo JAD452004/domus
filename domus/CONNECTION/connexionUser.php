@@ -5,7 +5,7 @@ session_start();
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>DOMUS - Connexion & Inscription</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -26,6 +26,7 @@ session_start();
             --cat-dark-blue: #1e40af;
             --cat-light-blue: #93c5fd;
             --transition: all 0.3s ease;
+            --max-width: 1200px;
         }
 
         * {
@@ -43,6 +44,7 @@ session_start();
             justify-content: center;
             overflow-x: hidden;
             position: relative;
+            padding: 20px;
         }
 
         /* ALERTS */
@@ -185,7 +187,7 @@ session_start();
             75% { transform: translateY(1px); }
         }
 
-        /* BULLE DE PAROLE - BIEN ESPACÉE */
+        /* BULLE DE PAROLE */
         .cat-speech {
             position: absolute;
             bottom: 140px;
@@ -202,7 +204,7 @@ session_start();
             transition: opacity 0.3s ease, transform 0.2s ease;
             pointer-events: none;
             z-index: 30;
-            max-width: 300px;
+            max-width: 250px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -237,7 +239,7 @@ session_start();
             margin-right: 6px;
         }
 
-        /* BULLE DE PENSÉE - BIEN ESPACÉE */
+        /* BULLE DE PENSÉE */
         .cat-thought {
             position: absolute;
             bottom: 140px;
@@ -254,7 +256,7 @@ session_start();
             transition: opacity 0.3s ease;
             pointer-events: none;
             z-index: 30;
-            max-width: 300px;
+            max-width: 250px;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -294,24 +296,25 @@ session_start();
             opacity: 1;
         }
 
-        /* CONTENEUR PRINCIPAL */
+        /* CONTENEUR PRINCIPAL - CORRECTION SCROLL */
         .main-container {
             display: flex;
             width: 100%;
-            max-width: 1100px;
+            max-width: var(--max-width);
             height: 85vh;
+            max-height: 800px;
             background: var(--white);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.08);
             overflow: hidden;
             position: relative;
             z-index: 1;
-            margin: 20px;
+            margin: 0 auto;
         }
 
         /* CÔTÉ GAUCHE */
         .left-panel {
-            width: 50%;
+            width: 45%;
             background: linear-gradient(135deg, var(--primary), #60a5fa);
             position: relative;
             display: flex;
@@ -319,7 +322,7 @@ session_start();
             justify-content: center;
             align-items: center;
             color: white;
-            padding: 40px;
+            padding: 40px 30px;
             text-align: center;
             overflow: hidden;
         }
@@ -431,13 +434,13 @@ session_start();
         .logo-container {
             position: relative;
             z-index: 10;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.3));
             animation: breathe 4s ease-in-out infinite;
         }
 
         .left-panel img {
-            width: 140px;
+            width: 120px;
             height: auto;
             position: relative;
             z-index: 10;
@@ -451,8 +454,8 @@ session_start();
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 180px;
-            height: 180px;
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
             z-index: 5;
@@ -464,8 +467,8 @@ session_start();
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             border: 2px dashed rgba(255,255,255,0.2);
             z-index: 4;
@@ -511,12 +514,17 @@ session_start();
         }
 
         .left-panel h2 {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             position: relative;
             z-index: 10;
             animation: slideInText 1s ease-out, glowText 3s ease-in-out infinite;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            padding: 0 10px;
         }
 
         .left-panel p {
@@ -526,6 +534,8 @@ session_start();
             position: relative;
             z-index: 10;
             animation: slideInText 1.2s ease-out;
+            max-width: 100%;
+            padding: 0 10px;
         }
 
         @keyframes slideInText {
@@ -544,26 +554,44 @@ session_start();
             50% { text-shadow: 0 0 20px rgba(255,255,255,0.5); }
         }
 
-        /* CÔTÉ DROIT */
+        /* CÔTÉ DROIT - CORRECTION SCROLL */
         .right-panel {
-            width: 50%;
-            padding: 50px;
+            width: 55%;
+            padding: 40px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             position: relative;
             overflow-y: auto;
+            max-height: 100%;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) #e2e8f0;
+        }
+
+        .right-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .right-panel::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .right-panel::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
         }
 
         .tabs {
             display: flex;
-            margin-bottom: 35px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #e2e8f0;
+            flex-shrink: 0;
         }
 
         .tab-btn {
             flex: 1;
-            padding: 15px;
+            padding: 12px;
             background: none;
             border: none;
             font-size: 16px;
@@ -591,11 +619,13 @@ session_start();
 
         .forms-wrapper {
             position: relative;
-            min-height: 400px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .form-content {
-            position: absolute;
+            position: relative;
             top: 0;
             left: 0;
             width: 100%;
@@ -603,27 +633,29 @@ session_start();
             visibility: hidden;
             transform: translateX(20px);
             transition: all 0.4s ease;
+            display: none;
         }
 
         .form-content.active {
             opacity: 1;
             visibility: visible;
             transform: translateX(0);
-            position: relative;
+            display: block;
         }
 
         /* BOUTONS SOCIAUX */
         .social-login-container {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
+            gap: 12px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
+            flex-shrink: 0;
         }
 
         .btn-social {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border: 2px solid #e2e8f0;
             background: white;
             border-radius: 50%;
@@ -642,7 +674,7 @@ session_start();
         }
 
         .btn-social i {
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .btn-social.google i { color: #DB4437; }
@@ -654,11 +686,12 @@ session_start();
             display: flex;
             align-items: center;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             color: var(--text-light);
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            flex-shrink: 0;
         }
 
         .divider::before, .divider::after {
@@ -673,13 +706,14 @@ session_start();
 
         .input-group {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            flex-shrink: 0;
         }
 
         .input-group input, 
         .input-group select {
             width: 100%;
-            padding: 14px 48px 14px 48px; 
+            padding: 12px 40px 12px 45px; 
             border: 2px solid #e2e8f0;
             border-radius: 10px;
             font-size: 14px;
@@ -697,6 +731,7 @@ session_start();
             color: #94a3b8;
             transition: var(--transition);
             pointer-events: none;
+            font-size: 16px;
         }
 
         .input-group input:focus ~ .input-icon,
@@ -730,6 +765,7 @@ session_start();
             cursor: pointer;
             transition: var(--transition);
             z-index: 2;
+            font-size: 16px;
         }
 
         .toggle-password:hover {
@@ -740,14 +776,15 @@ session_start();
             position: relative;
             display: flex;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .file-upload input[type="file"] { display: none; }
 
         .file-label {
             flex: 1;
-            padding: 14px;
-            padding-left: 48px;
+            padding: 12px;
+            padding-left: 45px;
             border: 2px dashed #cbd5e1;
             border-radius: 10px;
             cursor: pointer;
@@ -756,13 +793,16 @@ session_start();
             transition: var(--transition);
             display: flex;
             align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .file-label i {
             position: absolute;
             left: 16px;
             color: #cbd5e1;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .file-label:hover {
@@ -772,14 +812,22 @@ session_start();
 
         .file-label:hover i { color: var(--primary); }
 
+        .file-label span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-left: 5px;
+        }
+
         .validation-message {
             font-size: 12px;
-            margin-top: -10px;
-            margin-bottom: 15px;
+            margin-top: -8px;
+            margin-bottom: 12px;
             padding-left: 5px;
             display: none;
             align-items: center;
             gap: 6px;
+            flex-shrink: 0;
         }
 
         .validation-message.error {
@@ -805,12 +853,12 @@ session_start();
 
         .btn-submit {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             background: var(--primary);
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
@@ -819,6 +867,9 @@ session_start();
             align-items: center;
             justify-content: center;
             gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
 
         .btn-submit:hover {
@@ -833,9 +884,11 @@ session_start();
         }
 
         .links {
-            margin-top: 20px;
+            margin-top: 10px;
+            margin-bottom: 10px;
             text-align: center;
             font-size: 14px;
+            flex-shrink: 0;
         }
 
         .links a {
@@ -870,9 +923,9 @@ session_start();
 
         .forgot-box {
             background: white;
-            padding: 40px;
+            padding: 30px;
             width: 90%;
-            max-width: 450px;
+            max-width: 400px;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             text-align: center;
@@ -882,12 +935,12 @@ session_start();
 
         .forgot-overlay.active .forgot-box { transform: scale(1); }
 
-        .forgot-box h2 { color: var(--text-dark); margin-bottom: 10px; }
-        .forgot-box p { color: var(--text-light); font-size: 14px; margin-bottom: 25px; }
+        .forgot-box h2 { color: var(--text-dark); margin-bottom: 8px; font-size: 22px; }
+        .forgot-box p { color: var(--text-light); font-size: 13px; margin-bottom: 20px; }
 
         .back-link {
             display: inline-block;
-            margin-top: 20px;
+            margin-top: 15px;
             color: var(--text-light);
             font-size: 13px;
             text-decoration: none;
@@ -899,14 +952,14 @@ session_start();
         .back-link:hover { color: var(--primary); border-bottom-color: var(--primary); }
 
         .otp-input {
-            letter-spacing: 8px;
-            font-size: 24px;
+            letter-spacing: 6px;
+            font-size: 22px;
             text-align: center;
             font-weight: 600;
         }
 
         .resend-link {
-            margin-top: 15px;
+            margin-top: 12px;
             font-size: 13px;
             color: var(--primary);
             cursor: pointer;
@@ -955,13 +1008,13 @@ session_start();
         }
 
         .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid #e2e8f0;
-            border-top: 5px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 15px auto;
         }
 
         @keyframes spin { 
@@ -972,29 +1025,92 @@ session_start();
         .loader-text { 
             color: var(--text-dark); 
             font-weight: 600; 
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            margin-bottom: 8px;
         }
 
         .loader-subtext {
             color: var(--text-light);
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        /* MODE MOBILE - CHAT EN HAUT */
+        /* MODE MOBILE - CORRECTION COMPLÈTE */
         @media (max-width: 900px) {
-            .main-container { 
-                height: 95vh; 
-                width: 95%; 
-                margin: 10px;
+            body {
+                padding: 10px;
             }
-            .right-panel { padding: 30px; }
+            
+            .main-container { 
+                height: auto; 
+                min-height: 90vh;
+                max-height: none;
+                border-radius: 15px;
+            }
+            
+            .left-panel {
+                width: 40%;
+                padding: 30px 20px;
+            }
+            
+            .left-panel h2 {
+                font-size: 22px;
+                white-space: normal;
+                word-break: break-word;
+            }
+            
+            .left-panel p {
+                font-size: 13px;
+            }
+            
+            .right-panel { 
+                width: 60%;
+                padding: 30px 20px; 
+            }
+            
+            .left-panel img { 
+                width: 90px; 
+            }
+            
+            .glow-ring {
+                width: 130px;
+                height: 130px;
+            }
+            
+            .glow-ring-2 {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .social-login-container {
+                gap: 8px;
+            }
+            
+            .btn-social {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .btn-social i {
+                font-size: 18px;
+            }
+            
+            .input-group input, 
+            .input-group select {
+                padding: 10px 35px 10px 40px;
+                font-size: 13px;
+            }
+            
+            .btn-submit {
+                padding: 12px;
+                font-size: 14px;
+            }
         }
 
         @media (max-width: 768px) {
             body {
                 align-items: flex-start;
                 padding: 0;
+                background: white;
             }
             
             .main-container {
@@ -1005,62 +1121,88 @@ session_start();
                 border-radius: 0;
                 max-width: 100%;
                 margin: 0;
+                box-shadow: none;
             }
             
             .left-panel { 
                 width: 100%; 
-                padding: 30px 20px; 
-                min-height: 180px; 
+                padding: 25px 20px 20px; 
+                min-height: auto; 
                 position: relative;
+                border-radius: 0 0 25px 25px;
             }
             
             .left-panel img { 
-                width: 90px; 
+                width: 80px; 
             }
             
-            /* CHAT EN HAUT À DROITE DU LOGO */
+            .glow-ring {
+                width: 110px;
+                height: 110px;
+            }
+            
+            .glow-ring-2 {
+                width: 130px;
+                height: 130px;
+            }
+            
+            .left-panel h2 {
+                font-size: 20px;
+                margin-bottom: 5px;
+            }
+            
+            .left-panel p {
+                font-size: 12px;
+            }
+            
+            /* CHAT EN HAUT À DROITE */
             .cat-container { 
                 position: absolute;
-                top: 20px;
-                right: 20px;
+                top: 10px;
+                right: 10px;
                 bottom: auto;
                 left: auto;
-                width: 70px;
-                height: 70px;
+                width: 60px;
+                height: 60px;
                 z-index: 10000;
             }
             
             /* BULLE AJUSTÉE POUR LE CHAT EN HAUT */
             .cat-speech, .cat-thought { 
                 bottom: auto;
-                top: 80px;
+                top: 70px;
                 left: auto;
                 right: 0;
                 font-size: 10px; 
                 padding: 6px 12px; 
                 max-width: 180px;
-                white-space: nowrap;
+                white-space: normal;
+                word-break: break-word;
+                line-height: 1.3;
+                border-width: 2px;
+                min-width: 120px;
+                text-align: left;
             }
             
             .cat-speech::before, .cat-thought::before {
-                top: -12px;
+                top: -10px;
                 bottom: auto;
                 left: auto;
                 right: 20px;
-                border-left: 12px solid transparent;
+                border-left: 10px solid transparent;
                 border-right: 5px solid transparent;
-                border-bottom: 12px solid white;
+                border-bottom: 10px solid white;
                 border-top: none;
             }
             
             .cat-speech::after {
-                top: -15px;
+                top: -12px;
                 bottom: auto;
                 left: auto;
                 right: 20px;
-                border-left: 12px solid transparent;
+                border-left: 10px solid transparent;
                 border-right: 5px solid transparent;
-                border-bottom: 12px solid var(--primary);
+                border-bottom: 10px solid var(--primary);
                 border-top: none;
             }
             
@@ -1070,41 +1212,197 @@ session_start();
             
             .right-panel {
                 width: 100%; 
-                padding: 30px 20px 80px 20px; 
+                padding: 25px 20px 30px; 
                 border-radius: 25px 25px 0 0; 
-                margin-top: -15px;
+                margin-top: -10px;
+                max-height: none;
+                overflow-y: visible;
             }
             
-            .btn-social {
-                width: 42px;
-                height: 42px;
-            }
-            .btn-social i {
-                font-size: 18px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .cat-container { 
-                width: 60px; 
-                height: 60px; 
-                top: 15px;
-                right: 15px;
+            .tabs {
+                margin-bottom: 20px;
             }
             
-            .cat-speech, .cat-thought { 
-                top: 70px;
-                font-size: 9px; 
-                padding: 5px 10px; 
-                max-width: 160px;
+            .tab-btn {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .social-login-container {
+                gap: 10px;
+                margin-bottom: 15px;
             }
             
             .btn-social {
                 width: 38px;
                 height: 38px;
             }
+            
             .btn-social i {
                 font-size: 16px;
+            }
+            
+            .divider {
+                margin-bottom: 15px;
+                font-size: 11px;
+            }
+            
+            .input-group {
+                margin-bottom: 15px;
+            }
+            
+            .input-group input, 
+            .input-group select {
+                padding: 10px 35px 10px 40px;
+                font-size: 13px;
+            }
+            
+            .input-group .input-icon {
+                left: 14px;
+                font-size: 14px;
+            }
+            
+            .toggle-password {
+                right: 14px;
+                font-size: 14px;
+            }
+            
+            .file-label {
+                padding: 10px 10px 10px 40px;
+                font-size: 12px;
+            }
+            
+            .btn-submit {
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            .links {
+                margin-top: 10px;
+                margin-bottom: 10px;
+                font-size: 13px;
+            }
+            
+            .validation-message {
+                font-size: 11px;
+                margin-top: -5px;
+                margin-bottom: 10px;
+            }
+            
+            .forgot-box {
+                padding: 25px 20px;
+                width: 95%;
+            }
+            
+            .forgot-box h2 {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cat-container { 
+                width: 50px; 
+                height: 50px; 
+                top: 8px;
+                right: 8px;
+            }
+            
+            .cat-speech, .cat-thought { 
+                top: 60px;
+                font-size: 9px; 
+                padding: 5px 8px; 
+                max-width: 150px;
+                min-width: 100px;
+            }
+            
+            .left-panel {
+                padding: 20px 15px 15px;
+            }
+            
+            .left-panel img {
+                width: 70px;
+            }
+            
+            .glow-ring {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .glow-ring-2 {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .left-panel h2 {
+                font-size: 18px;
+            }
+            
+            .left-panel p {
+                font-size: 11px;
+            }
+            
+            .right-panel {
+                padding: 20px 15px 25px;
+            }
+            
+            .tab-btn {
+                padding: 8px;
+                font-size: 13px;
+            }
+            
+            .social-login-container {
+                gap: 8px;
+            }
+            
+            .btn-social {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .btn-social i {
+                font-size: 15px;
+            }
+            
+            .input-group input, 
+            .input-group select {
+                padding: 8px 32px 8px 35px;
+                font-size: 12px;
+            }
+            
+            .input-group .input-icon {
+                left: 12px;
+                font-size: 13px;
+            }
+            
+            .toggle-password {
+                right: 12px;
+                font-size: 13px;
+            }
+            
+            .btn-submit {
+                padding: 10px;
+                font-size: 13px;
+            }
+            
+            .links {
+                font-size: 12px;
+            }
+            
+            .forgot-box {
+                padding: 20px 15px;
+            }
+            
+            .forgot-box h2 {
+                font-size: 18px;
+            }
+            
+            .forgot-box p {
+                font-size: 12px;
+            }
+            
+            .otp-input {
+                font-size: 18px;
+                letter-spacing: 4px;
             }
         }
     </style>
@@ -1230,7 +1528,7 @@ session_start();
 
             <div class="forms-wrapper">
                 
-                <!-- FORMULAIRE CONNEXION -->
+                <!-- FORMULAIRE CONNEXION - MODIFIÉ POUR ACCEPTER EMAIL OU TÉLÉPHONE -->
                 <form id="form-signin" class="form-content active" method="POST" action="../PHP/connexion.php">
                     
                     <!-- BOUTONS SOCIAUX -->
@@ -1253,9 +1551,10 @@ session_start();
                         <span>ou avec votre compte</span>
                     </div>
 
+                    <!-- CHAMP MODIFIÉ : EMAIL OU TÉLÉPHONE -->
                     <div class="input-group">
-                        <i class="fas fa-phone-alt input-icon"></i>
-                        <input type="tel" name="numero" id="login_phone" placeholder="Numéro de téléphone" required onfocus="handleFieldFocus(event)" oninput="handleFieldInput(event)">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="identifiant" id="login_identifiant" placeholder="Email ou Téléphone" required onfocus="handleFieldFocus(event)" oninput="handleFieldInput(event)">
                     </div>
 
                     <div class="input-group">
@@ -1268,18 +1567,15 @@ session_start();
                         <a id="forgot-link">Mot de passe oublié ?</a>
                     </div>
 
-                    <div style="margin-top: 30px;">
-                        <button type="submit" name="connecter" class="btn-submit">
-                            <span>Se connecter</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+                    <button type="submit" name="connecter" class="btn-submit">
+                        <span>Se connecter</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
                 </form>
 
-                <!-- FORMULAIRE INSCRIPTION -->
+                <!-- FORMULAIRE INSCRIPTION (inchangé) -->
                 <form id="form-signup" class="form-content" method="POST" action="../PHP/inscription.php" enctype="multipart/form-data">
                     
-                    <!-- BOUTONS SOCIAUX -->
                     <div class="social-login-container">
                         <button type="button" class="btn-social google" onclick="handleSocial('Google')" title="S'inscrire avec Google">
                             <i class="fab fa-google"></i>
@@ -1327,7 +1623,7 @@ session_start();
                         <input type="file" id="cin_file" name="cin" onchange="handleFileSelect(event)">
                         <label for="cin_file" class="file-label" id="file_label">
                             <i class="fas fa-id-card"></i>
-                            <span style="margin-left: 20px;">CNI (Carte Nationale d'Identité)</span>
+                            <span>CNI (Carte Nationale d'Identité)</span>
                         </label>
                     </div>
 
@@ -1347,18 +1643,16 @@ session_start();
                         <i class="fas fa-info-circle"></i> <span>Les mots de passe ne correspondent pas.</span>
                     </div>
 
-                    <div style="margin-top: 10px;">
-                        <button type="submit" name="inscrit" class="btn-submit">
-                            <span>S'inscrire</span>
-                            <i class="fas fa-user-plus"></i>
-                        </button>
-                    </div>
+                    <button type="submit" name="inscrit" class="btn-submit">
+                        <span>S'inscrire</span>
+                        <i class="fas fa-user-plus"></i>
+                    </button>
                 </form>
 
             </div>
         </div>
 
-        <!-- MODALE OTP -->
+        <!-- MODALE OTP (inchangée) -->
         <div class="forgot-overlay" id="forgot-overlay">
             <div class="forgot-box" id="forgot-step-1">
                 <i class="fas fa-key" style="font-size: 40px; color: var(--primary); margin-bottom: 20px;"></i>
@@ -1473,7 +1767,7 @@ session_start();
             connect: [
                 "Connectez-vous vite",
                 "Vous avez déjà un compte",
-                "Regardez par ici",
+                "Email ou téléphone ?",
                 "Connectez-vous pour commencer"
             ],
             register: [
@@ -1484,13 +1778,13 @@ session_start();
             ]
         };
 
-        // Messages de réaction par champ
+        // Messages de réaction par champ (mis à jour avec le nouvel ID)
         const fieldMessages = {
-            'login_phone': [
-                "Votre numéro de téléphone",
-                "Un téléphone qui sonne souvent",
-                "10 chiffres et c'est bon",
-                "Pas de faute de frappe"
+            'login_identifiant': [
+                "Votre email ou téléphone",
+                "Pour vous connecter",
+                "Coucou, <?php echo isset($_POST['identifiant']) ? htmlspecialchars($_POST['identifiant']) : 'ami'; ?>",
+                "Je reconnais cet identifiant"
             ],
             'login_pass': [
                 "Mot de passe secret",
@@ -1501,14 +1795,14 @@ session_start();
             'reg_nom': [
                 "Comment vous appelez-vous",
                 "Votre nom complet",
-                "Un nom qui claque",
+                "Vous avez un joli nom",
                 "Je retiens votre nom"
             ],
             'reg_email': [
                 "Votre adresse email",
                 "Pour recevoir nos offres",
                 "Un email valide",
-                "Pas de spam promis"
+                "Je vous enverrai des nouvelles"
             ],
             'reg_phone': [
                 "Encore un numéro",
@@ -1532,7 +1826,7 @@ session_start();
                 "Choisissez bien votre mot de passe",
                 "Personne ne regarde",
                 "6 caractères minimum",
-                "Un mot de passe solide"
+                "Un mot de passe solide et facile à retenir"
             ],
             'reg_confirm_pass': [
                 "Vérification du mot de passe",
@@ -1841,6 +2135,16 @@ session_start();
                 } else if (numbers.length > 0) {
                     setCatMessage(`Encore ${10 - numbers.length} chiffre${10 - numbers.length > 1 ? 's' : ''}`);
                 }
+            }
+            else if (fieldId === 'login_identifiant' && fieldValue.length > 0) {
+                if (fieldValue.includes('@')) {
+                    setCatMessage("C'est un email, parfait");
+                } else if (/^\d+$/.test(fieldValue)) {
+                    setCatMessage("Un téléphone, je note");
+                } else {
+                    setCatMessage("Email ou téléphone ?");
+                }
+                happyEyes();
             }
             else if (fieldId === 'login_pass' || fieldId === 'reg_pass') {
                 if (fieldValue.length >= 6) {

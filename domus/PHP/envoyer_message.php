@@ -39,8 +39,8 @@ if ($check_result->num_rows === 0) {
     exit('Accès non autorisé à ce rendez-vous');
 }
 
-// Insertion du message avec requête préparée
-$stmt = $db->prepare("INSERT INTO discussion_messages (id_rdv, id_expediteur, role_exp, message) VALUES (?, ?, ?, ?)");
+// Insertion du message avec statut 'envoye'
+$stmt = $db->prepare("INSERT INTO chat_messages (id_rdv, id_expediteur, role_exp, message, statut) VALUES (?, ?, ?, ?, 'envoye')");
 $stmt->bind_param("iiss", $id_rdv, $exp_id, $role, $message);
 
 if ($stmt->execute()) {
@@ -50,4 +50,4 @@ if ($stmt->execute()) {
     http_response_code(500);
     echo 'Erreur lors de l\'envoi du message';
 }
-?>  
+?>

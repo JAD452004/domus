@@ -89,7 +89,6 @@ $nom_complet = $nom_vendeur;
     <style>
         /* STYLES SPÉCIFIQUES À L'ESPACE VENDEUR */
         
-        /* En-tête de l'espace vendeur */
         .vendeur-header {
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(37, 99, 235, 0.7)),
                         url("https://images.pexels.com/photos/7031423/pexels-photo-7031423.jpeg") center/cover;
@@ -104,7 +103,6 @@ $nom_complet = $nom_vendeur;
             position: relative;
         }
         
-        /* Boutons d'action */
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -164,7 +162,6 @@ $nom_complet = $nom_vendeur;
             border-color: #cbd5e1;
         }
         
-        /* Styles pour le slider (copiés de accueilClient) */
         .slider-wrapper {
             position: relative;
             padding: 10px 0 30px 0;
@@ -192,6 +189,12 @@ $nom_complet = $nom_vendeur;
             flex: 0 0 auto;
             scroll-snap-align: start;
             transition: transform 0.3s ease;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f1f5f9;
+            cursor: pointer;
         }
 
         .slider-wrapper .maison-card:hover {
@@ -256,13 +259,12 @@ $nom_complet = $nom_vendeur;
             border-radius: 10px;
         }
 
-        /* Carte de propriété (adaptée de accueilClient) */
+        /* Carte de propriété */
         .maison-card {
             background: white;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
             border: 1px solid #f1f5f9;
             cursor: pointer;
             position: relative;
@@ -298,6 +300,32 @@ $nom_complet = $nom_vendeur;
             font-weight: 600;
             z-index: 5;
             backdrop-filter: blur(5px);
+        }
+
+        /* NOUVEAU : Badge Vente/Location */
+        .transaction-badge {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            z-index: 5;
+            backdrop-filter: blur(5px);
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .transaction-badge.vente {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .transaction-badge.location {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
         }
 
         .description {
@@ -336,9 +364,17 @@ $nom_complet = $nom_vendeur;
             color: #10b981;
             font-weight: 700;
             font-size: 1.2rem;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
         }
 
-        /* Badge de vues */
+        .prix small {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 400;
+        }
+
         .vues-badge {
             position: absolute;
             bottom: 10px;
@@ -359,7 +395,6 @@ $nom_complet = $nom_vendeur;
             color: #fbbf24;
         }
 
-        /* Aucune propriété */
         .empty-properties {
             text-align: center;
             padding: 60px 40px;
@@ -375,7 +410,6 @@ $nom_complet = $nom_vendeur;
             color: #cbd5e1;
         }
         
-        /* Statistiques vendeur */
         .vendeur-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -424,7 +458,6 @@ $nom_complet = $nom_vendeur;
             font-size: 0.9rem;
         }
         
-        /* Petit badge pour les visiteurs du jour */
         .visiteurs-jour-badge {
             background: #f59e0b;
             color: white;
@@ -434,7 +467,6 @@ $nom_complet = $nom_vendeur;
             margin-left: 10px;
         }
         
-        /* Responsive */
         @media (max-width: 991px) {
             .action-buttons {
                 flex-direction: column;
@@ -493,7 +525,7 @@ $nom_complet = $nom_vendeur;
 <body>
 
     <!-- ============================
-         BARRE DE NAVIGATION (IDENTIQUE À accueilClient.php)
+         BARRE DE NAVIGATION
          ============================ -->
     <nav class="navbar">
         <div class="logo">
@@ -507,7 +539,6 @@ $nom_complet = $nom_vendeur;
             <li><a href="contact.php"><i class="fa-solid fa-envelope"></i> <span>Contact</span></a></li>
         </ul>
 
-        <!-- Zone utilisateur avec nom affiché -->
         <div class="user-area">
             <div class="user-info" onclick="window.location.href='profil.php'">
                 <?php include __DIR__ . '/_user_avatar.php'; ?>
@@ -531,12 +562,10 @@ $nom_complet = $nom_vendeur;
             <h2>Espace Vendeur</h2>
             <p>Bienvenue, <?php echo htmlspecialchars($nom_vendeur); ?>. Gérez vos propriétés en toute simplicité.</p>
             
-            <!-- Boutons d'action principaux -->
             <div class="action-buttons">
                 <a href="../PHP/ajouter_propriete.php" class="action-btn btn-add">
                     <i class="fa-solid fa-plus"></i> Ajouter une propriété
                 </a>
-              
                 <a href="../index.php" class="action-btn btn-public" target="_blank">
                     <i class="fa-solid fa-eye"></i> Voir le site public
                 </a>
@@ -605,13 +634,25 @@ $nom_complet = $nom_vendeur;
                 <button class="slider-btn prev"><i class="fas fa-chevron-left"></i></button>
                 
                 <div class="slider-container">
-                    <?php foreach ($proprietes as $prop): ?>
+                    <?php foreach ($proprietes as $prop): 
+                        // Récupérer le type de transaction
+                        $prop_transaction = $prop['transaction_type'] ?? 'vente';
+                    ?>
                         <div class="maison-card" onclick="window.location.href='../PHP/details.php?id=<?php echo $prop['id_maison']; ?>'">
                             <div class="card-img-wrapper">
                                 <img src="<?php echo htmlspecialchars($prop['image'] ?: '../DOMUS IMAGE/default.jpg'); ?>" 
                                      class="maison-image" 
                                      alt="<?php echo htmlspecialchars($prop['titre']); ?>">
                                 <div class="type-badge"><?php echo $prop['type_bien']; ?></div>
+                                
+                                <!-- Badge Vente/Location -->
+                                <div class="transaction-badge <?php echo $prop_transaction; ?>">
+                                    <?php if ($prop_transaction === 'vente'): ?>
+                                        <i class="fa-solid fa-tag"></i> Vente
+                                    <?php else: ?>
+                                        <i class="fa-solid fa-calendar-alt"></i> Location
+                                    <?php endif; ?>
+                                </div>
                                 
                                 <!-- Badge de nombre de vues uniques -->
                                 <div class="vues-badge" title="Visiteurs uniques">
@@ -632,6 +673,9 @@ $nom_complet = $nom_vendeur;
                                 </div>
                                 <div class="prix">
                                     <?php echo number_format($prop['prix'], 0, ',', ' '); ?> XOF
+                                    <?php if ($prop_transaction === 'location'): ?>
+                                        <small>/mois</small>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -721,7 +765,6 @@ $nom_complet = $nom_vendeur;
                 }
             });
             
-            // Ferme le menu quand on clique sur un lien
             const navItems = navLinks.querySelectorAll("a");
             navItems.forEach((item) => {
                 item.addEventListener("click", function () {
@@ -750,7 +793,8 @@ $nom_complet = $nom_vendeur;
             
             if (cards.length === 0) return;
             
-            // Créer les dots
+            dotsContainer.innerHTML = '';
+            
             cards.forEach((_, index) => {
                 const dot = document.createElement('div');
                 dot.classList.add('dot');
@@ -764,7 +808,6 @@ $nom_complet = $nom_vendeur;
                 dotsContainer.appendChild(dot);
             });
             
-            // Fonction pour mettre à jour les dots
             const updateDots = () => {
                 const scrollPosition = container.scrollLeft;
                 const cardWidth = cards[0].offsetWidth + 25;
@@ -780,7 +823,6 @@ $nom_complet = $nom_vendeur;
                 });
             };
             
-            // Gestion du scroll
             const scrollAmount = 325;
             
             prevBtn.addEventListener('click', () => {
