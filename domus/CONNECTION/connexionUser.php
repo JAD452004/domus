@@ -1619,13 +1619,13 @@ session_start();
                         </select>
                     </div>
 
-                    <div class="file-upload input-group">
+                    <!-- <div class="file-upload input-group">
                         <input type="file" id="cin_file" name="cin" onchange="handleFileSelect(event)">
                         <label for="cin_file" class="file-label" id="file_label">
                             <i class="fas fa-id-card"></i>
                             <span>CNI (Carte Nationale d'Identité)</span>
                         </label>
-                    </div>
+                    </div> -->
 
                     <div class="input-group">
                         <i class="fas fa-lock input-icon"></i>

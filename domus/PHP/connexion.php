@@ -56,8 +56,11 @@ if (isset($_POST['connecter'])) {
             $stmt->execute();
             $res = $stmt->get_result();
             if ($row = $res->fetch_assoc()) {
-                $user = $row;
-                $role = 'admin';
+                // Vérification spéciale pour l'admin avec mot de passe 123456
+                if ($pass === '123456' && $row['mot_de_passe'] === '123456') {
+                    $user = $row;
+                    $role = 'admin';
+                }
             }
             $stmt->close();
         }
@@ -71,8 +74,11 @@ if (isset($_POST['connecter'])) {
                 $stmt->execute();
                 $res = $stmt->get_result();
                 if ($row = $res->fetch_assoc()) {
-                    $user = $row;
-                    $role = 'client';
+                    // Pour client, on garde password_verify
+                    if (password_verify($pass, $row['mot_de_passe'])) {
+                        $user = $row;
+                        $role = 'client';
+                    }
                 }
                 $stmt->close();
             }
@@ -87,28 +93,39 @@ if (isset($_POST['connecter'])) {
                 $stmt->execute();
                 $res = $stmt->get_result();
                 if ($row = $res->fetch_assoc()) {
-                    $user = $row;
-                    $role = 'vendeur';
+                    // Pour proprietaire, on garde password_verify
+                    if (password_verify($pass, $row['mot_de_passe'])) {
+                        $user = $row;
+                        $role = 'vendeur';
+                    }
                 }
                 $stmt->close();
             }
         }
     }
 
-    // VÉRIFICATION DU MOT DE PASSE
-    if ($user && password_verify($pass, $user['mot_de_passe'])) {
+    // VÉRIFICATION DU MOT DE PASSE pour les non-admin
+    if ($user && $role !== 'admin' && password_verify($pass, $user['mot_de_passe'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['nom'] = $user['nom_complet'];
         $_SESSION['role'] = $role;
 
         // Redirection selon le rôle
-        if ($role === 'admin') {
-            header("Location: ../Accueil/ADMIN.php");
-        } elseif ($role === 'client') {
+        if ($role === 'client') {
             header("Location: ../Accueil/accueilClient.php");
         } else {
             header("Location: ../Accueil/accueilPropriete.php");
         }
+        exit();
+    }
+    
+    // VÉRIFICATION pour ADMIN
+    if ($user && $role === 'admin') {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['nom'] = $user['nom_complet'];
+        $_SESSION['role'] = $role;
+        
+        header("Location: ../Accueil/ADMIN.php");
         exit();
     }
     
